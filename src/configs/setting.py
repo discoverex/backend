@@ -1,0 +1,48 @@
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv(override=False)
+
+
+# 공통 설정
+REMOTE_HOST = os.getenv("REMOTE_HOST")
+
+# RDB 설정
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
+DB_HOST = os.getenv("DB_HOST", REMOTE_HOST)
+DB_PORT = int(os.getenv("DB_PORT"))
+
+# REDIS
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+
+REDIS_HOST = os.getenv("REDIS_HOST", REMOTE_HOST)
+REDIS_PORT = os.getenv("REDIS_PORT")
+
+# LLM
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+# 원격 서버
+APP_HOST = os.getenv("APP_HOST")  # 운영 환경에서는 '0.0.0.0' 주입
+APP_PORT = int(os.getenv("APP_PORT"))
+APP_ENV = os.getenv("APP_ENV")  # local, dev, prod 등
+
+# services
+
+# 프론트엔드
+WEB_HOST = os.getenv("WEB_HOST", REMOTE_HOST)
+WEB_PORT = os.getenv("WEB_PORT")
+WEB_URL = f"http://{WEB_HOST}:{WEB_PORT}"
+
+
+# 인증 - JWT 인증 관련 설정
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7일 동안 유효
+REFRESH_TOKEN_EXPIRE_SECONDS = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 7일 만료 (초단위)
