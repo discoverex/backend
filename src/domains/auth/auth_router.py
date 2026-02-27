@@ -10,7 +10,7 @@ auth_router = APIRouter(prefix="/auth", tags=["인증"])
     "/users/me",
     response_model=WrappedResponse[UserInfo],
     summary="로그인",
-    description="2d6 주사위를 굴려 플레이어의 능력치를 더한 후, 설정된 난이도와 비교해 성공 여부를 판정합니다.",
+    description="파이어베이스로부터 JWT를 받아 사용자 정보를 조회합니다.",
 )
 async def get_my_profile(user_info: dict = Depends(verify_firebase_token)):
     # DB(PostgreSQL 등)를 조회하여 추가 정보를 가져올 수 있습니다.
