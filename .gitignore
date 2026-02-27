@@ -42,3 +42,6 @@ tmp/
 
 # Gemini related files
 .gemini/
+
+# firebase auth
+serviceAccountKey.json

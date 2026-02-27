@@ -57,8 +57,12 @@ app.add_middleware(
     allow_headers=["*"],  # 모든 HTTP 헤더 허용
 )
 
-for router in API_ROUTERS:
-    app.include_router(router)
+def register_routers(app: FastAPI):
+    for router in API_ROUTERS:
+        app.include_router(router)
+
+
+register_routers(app)
 
 
 @app.get("/", description="서버 연결 확인", summary="테스트 - 서버 연결을 확인합니다.")

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -40,9 +41,9 @@ WEB_PORT = os.getenv("WEB_PORT")
 WEB_URL = f"http://{WEB_HOST}:{WEB_PORT}"
 
 
-# 인증 - JWT 인증 관련 설정
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+# 인증
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+FIREBASE_SERVICE_ACCOUNT_PATH = BASE_DIR / os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7일 동안 유효
 REFRESH_TOKEN_EXPIRE_SECONDS = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 7일 만료 (초단위)
