@@ -1,10 +1,10 @@
 import httpx
 
-# from src.configs.database import check_db_connection
-from src.configs.http_client import http_holder
+# from configs.database import check_db_connection
+from configs.http_client import http_holder
 # from configs.redis_conn import check_redis_connection
-from src.configs.setting import APP_PORT
-from src.utils.logger import info
+from configs.setting import APP_PORT
+from utils.logger import info
 
 
 def _initialize_http_client():

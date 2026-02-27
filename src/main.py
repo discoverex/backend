@@ -4,14 +4,14 @@ from typing import Dict
 from fastapi import FastAPI, HTTPException, Request, status
 from starlette.middleware.cors import CORSMiddleware
 
-from src.configs.api_routers import API_ROUTERS
+from configs.api_routers import API_ROUTERS
 # from configs.database import check_db_connection
 # from configs.redis_conn import check_redis_connection
-from src.utils.exceptions import init_exception_handlers
-from src.common.dtos.common_response import CustomJSONResponse
-from src.configs.logging_config import LOGGING_CONFIG
-from src.configs.origins import origins
-from src.configs.setting import APP_ENV, APP_HOST, APP_PORT, REMOTE_HOST
+from utils.exceptions import init_exception_handlers
+from common.dtos.common_response import CustomJSONResponse
+from configs.logging_config import LOGGING_CONFIG
+from configs.origins import origins
+from configs.setting import APP_ENV, APP_HOST, APP_PORT, REMOTE_HOST
 from utils.lifespan_handlers import shutdown_event_handler, startup_event_handler
 
 

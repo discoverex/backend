@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from fastapi.responses import JSONResponse
 
-from src.common.dtos.custom import CommonResponse, CustomStatus
+from common.dtos.custom import CommonResponse, CustomStatus
 
 
 class CustomJSONResponse(JSONResponse):
