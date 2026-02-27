@@ -20,4 +20,7 @@ async def get_my_profile(user_info: dict = Depends(verify_firebase_token)):
     # 여기서 우리 DB(PostgreSQL 등)를 조회하여 추가 정보를 가져올 수 있습니다.
     # 예: user_data = db.query(User).filter(User.firebase_uid == uid).first()
 
-    return UserInfo(message="인증 성공!", firebase_uid=uid, email=email)
+    return {
+        "data": UserInfo(firebase_uid=uid, email=email),
+        "message": "인증 성공!"
+    }
