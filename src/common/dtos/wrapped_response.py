@@ -2,7 +2,7 @@ from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel
 
-from common.dtos.custom import CustomStatus  # 기존 정의된 Enum
+from src.common.dtos.custom import CustomStatus  # 기존 정의된 Enum
 
 T = TypeVar("T")
 
