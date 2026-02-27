@@ -31,4 +31,4 @@ def startup_event_handler():
 async def shutdown_event_handler():
     await http_holder.client.aclose()
     info("HTTP 클라이언트 종료 중...")
-    info("BE router 종료 중...")
+    info("Backend Service 종료 중...")

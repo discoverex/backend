@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Vision AI Game Hub",
-    description="비전 AI 게임 허브의 주요 서비스와 메인 게임인 '렉스를 찾아라!' 서비스도 함께 제공됩니다.",
+    description="비전 AI 숨은그림찾기 '렉스를 찾아라!'입니다.",
     version="1.0.0",
     default_response_class=CustomJSONResponse,
     servers=[
