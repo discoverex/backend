@@ -8,7 +8,6 @@ from firebase_admin import credentials, auth
 from src.configs.setting import FIREBASE_SERVICE_ACCOUNT_PATH
 
 # 서비스 계정 키 로드 (JSON 파일 경로) → 파이어베이스 콘솔에서 제공 / .gitignore 항목 추가
-print(FIREBASE_SERVICE_ACCOUNT_PATH)
 cred = credentials.Certificate(str(FIREBASE_SERVICE_ACCOUNT_PATH))
 firebase_admin.initialize_app(cred)
 
