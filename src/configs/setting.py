@@ -40,6 +40,8 @@ WEB_HOST = os.getenv("WEB_HOST", REMOTE_HOST)
 WEB_PORT = os.getenv("WEB_PORT")
 WEB_URL = f"http://{WEB_HOST}:{WEB_PORT}"
 
+# 허깅페이스
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 # 인증
 BASE_DIR = Path(__file__).resolve().parent.parent.parent

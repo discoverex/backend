@@ -1,4 +1,4 @@
-from configs.setting import WEB_PORT, APP_PORT
+from src.configs.setting import WEB_PORT, APP_PORT
 
 origins = [
     f"http://localhost:{WEB_PORT}",

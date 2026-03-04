@@ -45,3 +45,6 @@ tmp/
 
 # firebase auth
 serviceAccountKey.json
+
+# debug
+debug_outputs
