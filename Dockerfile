@@ -1,27 +1,32 @@
-# 1. Python 공식 이미지를 베이스로 사용 (쉘이 포함되어 있음)
+# 1. 빌드 스테이지
 FROM python:3.11-slim AS builder
 
-# uv 설치 (가장 확실한 방법)
+# uv 설치
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvbin/uv
 ENV PATH="/uvbin:${PATH}"
 
 WORKDIR /app
 
-# 의존성 파일 복사
+# 의존성 파일 복사 및 설치
 COPY pyproject.toml uv.lock ./
-
-# 시스템에 직접 설치 (Cloud Run은 컨테이너 자체가 독립된 환경이라 --system이 효율적입니다)
 RUN uv pip install --system --no-cache -r pyproject.toml
 
 # 2. 실행 스테이지
 FROM python:3.11-slim
 WORKDIR /app
 
-# 빌드 스테이지에서 설치된 패키지 및 소스 복사
+# [추가] 로그가 즉시 출력되도록 설정 (Cloud Run 디버깅용)
+ENV PYTHONUNBUFFERED=1
+
+# 빌드 스테이지에서 패키지 복사
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-# 복사한 패키지를 Python이 찾을 수 있도록 경로 설정(안전장치)
 ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages
+
+# [수정] 소스 코드 전체 복사 (패키지 외에 main.py 등 포함)
 COPY . .
 
-# 서버 실행
+# [중요] 포트 환경변수 기본값 설정 (혹시 모를 에러 방지용)
+ENV APP_PORT=3333
+
+# 서버 실행 (Shell form 사용으로 $APP_PORT 치환 허용)
 CMD python main.py --port $APP_PORT
