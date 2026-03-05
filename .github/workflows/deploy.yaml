@@ -44,5 +44,8 @@ jobs:
             --region asia-northeast3 \
             --platform managed \
             --port ${{ secrets.APP_PORT }} \
+            --cpu=2 \
+            --memory=4Gi \
+            --timeout=600 \
             --set-env-vars "^|^APP_PORT=${{ secrets.APP_PORT }}|APP_ENV=${{ secrets.APP_ENV }}|DB_PORT=${{ secrets.DB_PORT }}|WEB_PORT=${{ secrets.WEB_PORT }}|HF_TOKEN=${{ secrets.HF_TOKEN }}|OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}|FIREBASE_SERVICE_ACCOUNT_JSON=$FB_JSON" \
             --allow-unauthenticated
