@@ -14,6 +14,7 @@ WORKDIR /app
 
 # 로그 즉시 출력
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
 # 의존성 설치
 COPY pyproject.toml uv.lock ./
@@ -21,5 +22,4 @@ RUN uv pip install --system --no-cache -r pyproject.toml
 
 # 소스 복사
 COPY . .
-ENV PYTHONPATH=/app
 CMD ["python", "src/main.py"]

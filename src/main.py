@@ -100,7 +100,6 @@ if __name__ == "__main__":
         effective_port = int(env_port) if env_port else (APP_PORT or 8080)
 
     effective_host = "127.0.0.1" if APP_ENV == "local" else "0.0.0.0"
-    print(f"{APP_ENV} 서버가 {effective_host}:{effective_port}에서 실행됩니다.")
 
     LOGGING_CONFIG["handlers"]["default"]["stream"] = "ext://sys.stdout"
     LOGGING_CONFIG["handlers"]["access"]["stream"] = "ext://sys.stdout"

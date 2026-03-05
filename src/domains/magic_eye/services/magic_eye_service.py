@@ -4,10 +4,6 @@ import random
 import shutil
 from datetime import datetime
 
-import torch
-from diffusers import StableDiffusionPipeline
-from transformers import pipeline
-
 from src.configs.setting import APP_ENV
 from src.domains.magic_eye.consts.generated_image import GeneratedImage, TargetDetails
 from src.domains.magic_eye.consts.magic_eye_assets import MAGIC_EYE_ASSETS
@@ -18,6 +14,11 @@ from src.utils.logger import info
 
 class MagicEyeService:
     def __init__(self):
+        # 클래스 초기화 시점이 아니라, 실제 로컬에서 사용할 때만 임포트
+        import torch
+        from diffusers import StableDiffusionPipeline
+        from transformers import pipeline
+
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # 1. Stable Diffusion 모델 로드 (이미지 생성용)
@@ -46,6 +47,8 @@ class MagicEyeService:
                 except Exception as e: print(f"Delete error: {e}")
 
     async def generate_random_game(self) -> GeneratedImage:
+        import torch
+
         # 1. 랜덤 사물 선택
         target = random.choice(self.assets)
 
