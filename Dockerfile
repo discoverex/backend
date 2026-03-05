@@ -19,11 +19,9 @@ WORKDIR /app
 
 # 빌드 스테이지에서 설치된 패키지 및 소스 복사
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+# 복사한 패키지를 Python이 찾을 수 있도록 경로 설정(안전장치)
+ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages
 COPY . .
 
-# Cloud Run에서 설정한 3333 포트 사용
-ENV PORT 3333
-EXPOSE 3333
-
-# 서버 실행 (main.py가 루트에 있다고 가정)
-CMD ["python", "main.py", "--port", "3333"]
+# 서버 실행
+CMD python main.py --port $APP_PORT
