@@ -4,14 +4,14 @@ from typing import Dict
 from fastapi import FastAPI, HTTPException, Request, status
 from starlette.middleware.cors import CORSMiddleware
 
+from common.dtos.common_response import CustomJSONResponse
 from configs.api_routers import API_ROUTERS
+from configs.logging_config import LOGGING_CONFIG
+from configs.origins import origins
+from configs.setting import APP_ENV, APP_PORT, REMOTE_HOST
 # from configs.database import check_db_connection
 # from configs.redis_conn import check_redis_connection
 from utils.exceptions import init_exception_handlers
-from common.dtos.common_response import CustomJSONResponse
-from configs.logging_config import LOGGING_CONFIG
-from configs.origins import origins
-from configs.setting import APP_ENV, APP_HOST, APP_PORT, REMOTE_HOST
 from utils.lifespan_handlers import shutdown_event_handler, startup_event_handler
 
 
@@ -100,6 +100,7 @@ if __name__ == "__main__":
         effective_port = int(env_port) if env_port else (APP_PORT or 8080)
 
     effective_host = "127.0.0.1" if APP_ENV == "local" else "0.0.0.0"
+    print(f"{APP_ENV} 서버가 {effective_host}:{effective_port}에서 실행됩니다.")
 
     LOGGING_CONFIG["handlers"]["default"]["stream"] = "ext://sys.stdout"
     LOGGING_CONFIG["handlers"]["access"]["stream"] = "ext://sys.stdout"
