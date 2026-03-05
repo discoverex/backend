@@ -86,9 +86,20 @@ def health_check() -> Dict[str, str]:
 
 
 if __name__ == "__main__":
+    import os
     import uvicorn
 
-    effective_host = APP_HOST or ("127.0.0.1" if APP_ENV == "local" else "0.0.0.0")
+    # 1. Cloud Run은 시스템 환경변수 'PORT'를 통해 포트 지정
+    # 우선순위: 시스템 PORT > 설정 파일의 APP_PORT > 기본값 8080
+    env_port = os.environ.get("PORT")
+
+    if APP_ENV == "local":
+        effective_port = APP_PORT
+    else:
+        # env_port가 있으면 사용하고, 없으면 APP_PORT를 사용 (둘 다 없으면 8080)
+        effective_port = int(env_port) if env_port else (APP_PORT or 8080)
+
+    effective_host = "127.0.0.1" if APP_ENV == "local" else "0.0.0.0"
 
     LOGGING_CONFIG["handlers"]["default"]["stream"] = "ext://sys.stdout"
     LOGGING_CONFIG["handlers"]["access"]["stream"] = "ext://sys.stdout"
@@ -96,7 +107,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host=effective_host,
-        port=APP_PORT,
+        port=effective_port,
         reload=(APP_ENV == "local"),
         log_config=LOGGING_CONFIG,
     )
