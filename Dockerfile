@@ -21,5 +21,5 @@ RUN uv pip install --system --no-cache -r pyproject.toml
 
 # 소스 복사
 COPY . .
-
+ENV PYTHONPATH=/app
 CMD ["python", "src/main.py"]
