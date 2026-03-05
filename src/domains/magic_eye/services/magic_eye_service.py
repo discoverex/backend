@@ -11,7 +11,9 @@ from transformers import pipeline
 from src.configs.setting import APP_ENV
 from src.domains.magic_eye.consts.generated_image import GeneratedImage, TargetDetails
 from src.domains.magic_eye.consts.magic_eye_assets import MAGIC_EYE_ASSETS
+from src.domains.magic_eye.utils.get_diverse_prompts import PromptAgent
 from src.domains.magic_eye.utils.stereogram import create_stereogram
+from src.utils.logger import info
 
 
 class MagicEyeService:
@@ -31,73 +33,67 @@ class MagicEyeService:
             device=0 if self.device == "cuda" else -1
         )
 
+        self.prompt_agent = PromptAgent()
         self.assets = MAGIC_EYE_ASSETS
 
     def _clear_debug_folder(self, folder_path: str):
-        """디버그 폴더 내의 모든 파일 삭제"""
         if os.path.exists(folder_path):
             for filename in os.listdir(folder_path):
                 file_path = os.path.join(folder_path, filename)
                 try:
-                    if os.path.isfile(file_path) or os.path.is_link(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
-                except Exception as e:
-                    print(f"Failed to delete {file_path}. Reason: {e}")
+                    if os.path.isfile(file_path): os.unlink(file_path)
+                    elif os.path.isdir(file_path): shutil.rmtree(file_path)
+                except Exception as e: print(f"Delete error: {e}")
 
     async def generate_random_game(self) -> GeneratedImage:
-        """저장된 에셋 풀에서 랜덤하게 사물을 골라 매직아이 세트를 생성합니다."""
-
         # 1. 랜덤 사물 선택
         target = random.choice(self.assets)
-        print(f"🎯 Selected Target: {target['display_name']} ({target['id']})")
 
-        # 2. 프롬프트 구성 (그림자 억제를 위한 Negative Prompt 강화)
-        refined_prompt = f"{target['prompt']}, flat lighting, no shadows, white background, high contrast"
-        negative_prompt = "shadows, shading, highlights, gradient, realistic texture, blurry, background details, soft edges"
+        # 2. 랭체인 에이전트로부터 실시간 프롬프트 1개 획득
+        # (만약 비용 절감을 위해 고정 프롬프트를 쓰고 싶다면 target['prompt']를 사용하도록 백업 로직 구성 가능)
+        count_limit = random.randint(1, 3)
+        info(f"🎯 Selected Target: {target['display_name']} | Count: {count_limit}")
+        llm_prompts = await self.prompt_agent.get_diverse_prompts(target['display_name'], count=count_limit)
+        base_prompt = llm_prompts[0] if llm_prompts else target['prompt']
+        info(f"Base Prompt: {base_prompt}")
 
-        # 3. 이미지 생성 (Stable Diffusion)
+        refined_prompt = f"{base_prompt}, high contrast, 3d form"
+        negative_prompt = "shadows, shading, grey, gradient, blurry, soft edges, realistic, photography, texture"
+
+        # 3. 이미지 생성 (Random Seed 적용으로 다양성 확보)
+        generator = torch.Generator(device=self.device).manual_seed(torch.seed())
+
         raw_image = self.sd_pipe(
             prompt=refined_prompt,
             negative_prompt=negative_prompt,
-            num_inference_steps=25
+            num_inference_steps=25,
+            generator=generator
         ).images[0]
 
-        # 4. Depth Map 추출 및 가공
+        # 4. Depth Map 추출
         depth_result = self.depth_estimator(raw_image)
-        depth_map = depth_result["depth"]  # 이것이 '정답' 이미지
+        depth_map = depth_result["depth"]
 
-        # 5. 매직아이(Stereogram) 합성
+        # 5. 매직아이 합성
         magic_eye_img = create_stereogram(depth_map)
 
-        # 6. 결과물을 바이너리(Bytes)로 변환
-        # 문제 이미지 (Stereogram)
-        prob_io = io.BytesIO()
+        # 6. 결과물 인코딩
+        prob_io, ans_io = io.BytesIO(), io.BytesIO()
         magic_eye_img.save(prob_io, format='PNG')
-        prob_bytes = prob_io.getvalue()
-
-        # 정답 이미지 (Depth Map)
-        ans_io = io.BytesIO()
         depth_map.save(ans_io, format='PNG')
-        ans_bytes = ans_io.getvalue()
 
-        # 로컬 개발 환경이라면 문제/정답 이미지 저장 → 디버그 용
+        # 로컬 환경 디버그 저장
         if APP_ENV == "local":
             debug_path = "debug_outputs"
-            # 기존 파일들 전부 제거
             self._clear_debug_folder(debug_path)
-            # 폴더 재생성
             os.makedirs(debug_path, exist_ok=True)
-            # 새 이미지 저장
-            timestamp = datetime.now().strftime("%H%M%S")
-            magic_eye_img.save(f"{debug_path}/{timestamp}_{target['id']}_problem.png")
-            depth_map.save(f"{debug_path}/{timestamp}_{target['id']}_answer.png")
+            ts = datetime.now().strftime("%H%M%S")
+            magic_eye_img.save(f"{debug_path}/{ts}_{target['id']}_problem.png")
+            depth_map.save(f"{debug_path}/{ts}_{target['id']}_answer.png")
 
-        # 7. 전체 데이터 패키징 반환
         return GeneratedImage(
-            problem_image=prob_bytes,
-            answer_image=ans_bytes,
+            problem_image=prob_io.getvalue(),
+            answer_image=ans_io.getvalue(),
             target_info=TargetDetails(
                 id=target['id'],
                 display_name=target['display_name'],
