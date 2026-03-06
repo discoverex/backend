@@ -74,4 +74,4 @@ async def generate_magic_eye_batch(num_images_per_asset: int = 30):
 if __name__ == "__main__":
     # 장당 79초 기준, 900장 생성 시 약 20시간 소요됩니다.
     # 중단되었다가 다시 실행하면 완료된 파일은 건너뛰고 나머지부터 시작합니다.
-    asyncio.run(generate_magic_eye_batch(num_images_per_asset=30))
+    asyncio.run(generate_magic_eye_batch(num_images_per_asset=300))
