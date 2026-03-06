@@ -38,7 +38,8 @@ APP_ENV = os.getenv("APP_ENV")  # local, dev, prod 등
 # 프론트엔드
 WEB_HOST = os.getenv("WEB_HOST", REMOTE_HOST)
 WEB_PORT = os.getenv("WEB_PORT")
-WEB_URL = f"http://{WEB_HOST}:{WEB_PORT}"
+# WEB_URL = f"http://{WEB_HOST}:{WEB_PORT}"
+WEB_URL = os.getenv("WEB_URL")
 
 # 허깅페이스
 HF_TOKEN = os.getenv("HF_TOKEN")

@@ -3,10 +3,11 @@ import os
 import random
 import shutil
 from datetime import datetime
+from typing import Optional
 
 from src.configs.setting import APP_ENV
-from src.domains.magic_eye.consts.generated_image import GeneratedImage, TargetDetails
 from src.domains.magic_eye.consts.magic_eye_assets import MAGIC_EYE_ASSETS
+from src.domains.magic_eye.dtos.generated_image import GeneratedImage, TargetDetails
 from src.domains.magic_eye.utils.get_diverse_prompts import PromptAgent
 from src.domains.magic_eye.utils.stereogram import create_stereogram
 from src.utils.logger import info
@@ -101,5 +102,44 @@ class MagicEyeService:
                 id=target['id'],
                 display_name=target['display_name'],
                 keywords=target['keywords'],
+            )
+        )
+
+    async def generate_specific_game(self, asset: dict, base_prompt: str, seed: Optional[int] = None) -> GeneratedImage:
+        import torch
+        # 시드 설정 (재현성 또는 랜덤성)
+        actual_seed = seed if seed is not None else random.randint(0, 1000000)
+        generator = torch.Generator(device=self.device).manual_seed(actual_seed)
+
+        refined_prompt = f"{base_prompt}, high contrast, solid 3d silhouette, isolated on white background"
+        negative_prompt = "shadows, shading, blurry, soft edges, realistic, photography, complex texture, gradient"
+
+        # 3. 이미지 생성 (CPU 환경에서는 이 단계가 가장 오래 걸림)
+        raw_image = self.sd_pipe(
+            prompt=refined_prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=20,  # CPU 속도를 고려해 단계를 약간 줄임
+            generator=generator
+        ).images[0]
+
+        # 4. Depth Map 추출
+        depth_result = self.depth_estimator(raw_image)
+        depth_map = depth_result["depth"]
+
+        # 5. 매직아이 합성
+        magic_eye_img = create_stereogram(depth_map)
+
+        # 6. 결과물 인코딩 및 반환
+        prob_io, ans_io = io.BytesIO(), io.BytesIO()
+        magic_eye_img.save(prob_io, format='PNG')
+        depth_map.save(ans_io, format='PNG')
+
+        return GeneratedImage(
+            problem_image=prob_io.getvalue(),
+            answer_image=ans_io.getvalue(),
+            target_info=TargetDetails(
+                id=asset['id'],
+                display_name=asset['display_name'],
+                keywords=asset['keywords'],
             )
         )
