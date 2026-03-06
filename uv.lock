@@ -79,6 +79,7 @@ dependencies = [
 ai = [
     { name = "accelerate" },
     { name = "diffusers" },
+    { name = "google-cloud-storage" },
     { name = "opencv-python" },
     { name = "torch" },
     { name = "transformers" },
@@ -108,6 +109,7 @@ requires-dist = [
 ai = [
     { name = "accelerate", specifier = ">=1.12.0" },
     { name = "diffusers", specifier = ">=0.36.0" },
+    { name = "google-cloud-storage", specifier = ">=3.9.0" },
     { name = "opencv-python", specifier = ">=4.13.0.92" },
     { name = "torch", specifier = ">=2.10.0" },
     { name = "transformers", specifier = ">=5.2.0" },

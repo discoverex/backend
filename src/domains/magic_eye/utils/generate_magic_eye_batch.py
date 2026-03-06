@@ -8,7 +8,7 @@ from src.utils.logger import info
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 async def generate_magic_eye_batch(num_images_per_asset: int = 30):
-    output_base_dir = os.path.join(BASE_DIR, "src", "outputs")
+    output_base_dir = os.path.join(BASE_DIR, "outputs")
     os.makedirs(output_base_dir, exist_ok=True)
 
     # 서비스 초기화 (GPU 없으면 자동으로 CPU 모드로 로드됨)
