@@ -1,4 +1,4 @@
-from configs.setting import APP_ENV
+from src.configs.setting import APP_ENV
 from src.domains.auth.auth_router import auth_router
 
 API_ROUTERS = [auth_router]

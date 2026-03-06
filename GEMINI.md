@@ -43,8 +43,16 @@
    source .venv/bin/activate
    ```
 3. **의존성을 설치합니다:**
+### 의존성 설치
+
+1. **특정 그룹(ai)만 포함해서 설치할 때**
    ```bash
-   uv pip install -r requirements.txt
+   uv pip install -e . --extra ai
+   ```
+
+2. **만약 모든 그룹(dev, ai 등)을 한꺼번에 설치하고 싶을 때 (로컬 개발 환경)**
+   ```bash
+   uv sync --all-groups
    ```
    *참고: `requirements.txt`가 존재하지 않는 경우, `pyproject.toml`에서 생성하거나 `uv pip install -e .`를 사용하여 직접 의존성을 설치할 수 있습니다.*
 
@@ -92,22 +100,81 @@ uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
 
 `http://127.0.0.1:8000/docs`에서 API 문서에 접근할 수 있습니다.
 
+## 💡 Vision AI Game Hub 개발 전략 (중요)
+
+비전 AI 개발 특성상 일부 의존성은 클라우드 환경에서 운영하기에 적합하지 않습니다. 따라서 "Magic Eye Game Hub"와 같은 AI 관련 기능은 다음과 같은 전략으로 개발 및 배포됩니다.
+
+- **AI 관련 기능은 로컬에서만 테스트**: Magic Eye 게임 서비스와 같은 AI 관련 기능은 개발 및 테스트를 로컬 환경에서만 진행합니다.
+- **로컬 MS (Microservice) 분리 가능성**: 개발 및 테스트 완료 후, AI 관련 기능은 별도의 로컬 마이크로서비스로 분리될 수 있습니다. 이 로컬 MS는 테스트, 파인튜닝, 이미지 생성 등을 담당합니다.
+- **데이터 흐름**: 로컬 MS에서 생성된 이미지는 GCP 스토리지 버킷에 업로드되며, 프론트엔드에서는 GCP 스토리지 버킷에 업로드된 이미지를 읽는 방식으로 서비스가 제공됩니다.
+- **구현 참고**: 이 전략은 `src/main.py`, `src/configs/api_routers.py`, `src/domains/magic_eye/services/magic_eye_service.py` 파일의 코드에 반영되어 있습니다. 특히 `src/configs/api_routers.py`에서 `APP_ENV`가 "local"일 때만 `magic_eye_router`가 로드되는 부분을 확인할 수 있습니다.
+
 ## 개발 규칙
 
-### 코드 스타일
+## 🚀 Core Modules
 
-이 프로젝트에는 아직 엄격한 코드 스타일 가이드가 정의되어 있지 않습니다. 그러나 Python 코드에 대해 **PEP 8** 스타일 가이드를 따르는 것이 좋습니다.
+1. src/common: 여러 도메인에서 공통으로 재사용되는 코드를 관리합니다. 도메인 간의 경계를 넘나드는 유틸리티나 공통 데이터 구조가 여기에 위치합니다.
 
-### API 개발
+    - dtos/: 전역적으로 사용되는 데이터 전송 객체
+    - utils/: 범용 유틸리티 함수
 
-- API 라우터는 `src/routers/` 디렉토리에 정의됩니다 (이 디렉토리는 현재 없으며 `src/configs/api_routers.py`의 `API_ROUTERS`는 비어 있습니다).
-- 새로운 관련 엔드포인트 세트를 추가할 때, 새 라우터를 만들고 `src/configs/api_routers.py`의 `API_ROUTERS` 목록에 추가하십시오.
-- 요청 및 응답 모델에는 `src/common/dtos/` 디렉토리의 DTO (Data Transfer Objects)를 사용하십시오.
+2. src/configs: 애플리케이션의 런타임 환경을 제어하는 설정 파일들의 집합입니다.
 
-### 테스트
+- 환경 변수 관리 (Env Vars)
+- 데이터베이스 커넥션 풀 및 외부 라이브러리 설정
+- 로그 출력 규칙 및 전역 예외 처리(Exception Handling)
+- 외부 노출 라우터 리스트 등
 
-TODO: 테스트 실행 방법에 대한 지침을 추가해야 합니다.
+3. src/domains: 실제 비즈니스 로직이 수행되는 핵심 계층입니다. Swagger 문서상에서도 이 도메인 단위를 기준으로 API 태그가 분류됩니다.
 
-### 기여 지침
+   | 폴더/파일             | 역할 설명                                                   |
+         |:------------------|:--------------------------------------------------------|
+   | **dtos/**         | Pydantic 모델을 정의합니다. (Request/Response 스키마)              |
+   | **prompts/**      | LLM 서비스를 위한 .md 프롬프트 파일 또는 동적 프롬프트 생성 파이썬 함수            |
+   | **queries/**      | PostgreSQL 기반의 템플릿 .sql 파일. Service 계층에서 이를 호출하여 사용합니다. |
+   | **utils/**        | 해당 도메인 내 반복 로직, 추상 클래스, 팩토리 메서드 등 리팩터링 공간               |
+   | **\*_router.py**  | API 엔드포인트를 정의하고 요청을 서비스 계층으로 전달합니다.                     |
+   | **\*_service.py** | 핵심 비즈니스 로직 및 쿼리 실행을 담당합니다. 필요 시 파일 분리가 가능합니다.           |
 
-TODO: 기여 지침을 추가해야 합니다.
+---
+
+## 🛠️ Development Principles & Rules
+코드의 일관성과 유지보수성을 위해 아래 규칙을 반드시 준수합니다.
+
+1. 객체지향 설계 (OOP)
+
+- Class 기반 구현: Router와 Service 계층은 함수형이 아닌 클래스 선언을 원칙으로 합니다.
+- 메서드 구현: 각 기능을 클래스 내부 메서드로 구현하여 응집도를 높이고 상태 관리를 명확히 합니다.
+
+2. 코드 스타일 (Pythonic Code)
+
+- 3항 연산자 활용: 단순한 조건식은 true_value if condition else false_value 형태의 파이썬 3항식을 사용하여 간결함을 유지합니다.
+- 주석 작성: 코드를 제외한 모든 설명 주석은 한국어로 작성하여 팀 내 의사소통 효율을 높입니다.
+
+3. 코드 품질 관리 (Linting)
+
+- Ruff 사용: 프로젝트의 모든 코드는 Ruff를 통해 린팅 및 포맷팅을 수행합니다.
+- Rule 준수: pyproject.toml에 선언된 규칙을 엄격히 따르며, 커밋 전 반드시 린트 체크를 권장합니다.
+
+4. 데이터 흐름 (Data Flow)
+
+- Router: 요청 접수 및 응답 반환 (로직 최소화)
+- Service: 비즈니스 유효성 검사 및 데이터 가공 (핵심 로직)
+- Repository (Queries): 데이터베이스와의 상호작용
+- 참고
+    - 서비스 계층에서는 /src/utils/load_sql.py에서 load_sql(domain: str, filename: str) 함수를 사용해 템플릿 SQL을 불러오면 편리합니다.
+
+5. Type Hinting:
+
+- 파이썬의 typing 모듈을 사용하여 모든 메서드의 인자와 반환값에 타입을 명시합니다.
+
+6. Gemini 협업 및 응답 규칙
+
+- 언어 설정: 제미나이(AI)와의 모든 대화 및 제미나이의 모든 응답은 한국어로 진행합니다.
+- 코드 가이드: 제미나이는 코드를 제안할 때 본 문서에 명시된 OOP 구조와 Ruff 스타일을 반영해야 합니다.
+
+---
+
+## 💡 Tip: 서비스 확장 가이드
+
+도메인 로직이 비대해질 경우, 단일 서비스 파일에 모든 것을 넣지 않고 auth_service.py, payment_service.py와 같이 기능 단위로 서비스를 분리하여 가독성을 확보하세요.
