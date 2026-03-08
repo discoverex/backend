@@ -43,16 +43,8 @@
    source .venv/bin/activate
    ```
 3. **의존성을 설치합니다:**
-### 의존성 설치
-
-1. **특정 그룹(ai)만 포함해서 설치할 때**
    ```bash
-   uv pip install -e . --extra ai
-   ```
-
-2. **만약 모든 그룹(dev, ai 등)을 한꺼번에 설치하고 싶을 때 (로컬 개발 환경)**
-   ```bash
-   uv sync --all-groups
+   uv sync
    ```
    *참고: `requirements.txt`가 존재하지 않는 경우, `pyproject.toml`에서 생성하거나 `uv pip install -e .`를 사용하여 직접 의존성을 설치할 수 있습니다.*
 
@@ -99,15 +91,6 @@ uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
 이렇게 하면 Uvicorn 서버가 시작되고 코드가 변경될 때 자동으로 다시 로드됩니다.
 
 `http://127.0.0.1:8000/docs`에서 API 문서에 접근할 수 있습니다.
-
-## 💡 Vision AI Game Hub 개발 전략 (중요)
-
-비전 AI 개발 특성상 일부 의존성은 클라우드 환경에서 운영하기에 적합하지 않습니다. 따라서 "Magic Eye Game Hub"와 같은 AI 관련 기능은 다음과 같은 전략으로 개발 및 배포됩니다.
-
-- **AI 관련 기능은 로컬에서만 테스트**: Magic Eye 게임 서비스와 같은 AI 관련 기능은 개발 및 테스트를 로컬 환경에서만 진행합니다.
-- **로컬 MS (Microservice) 분리 가능성**: 개발 및 테스트 완료 후, AI 관련 기능은 별도의 로컬 마이크로서비스로 분리될 수 있습니다. 이 로컬 MS는 테스트, 파인튜닝, 이미지 생성 등을 담당합니다.
-- **데이터 흐름**: 로컬 MS에서 생성된 이미지는 GCP 스토리지 버킷에 업로드되며, 프론트엔드에서는 GCP 스토리지 버킷에 업로드된 이미지를 읽는 방식으로 서비스가 제공됩니다.
-- **구현 참고**: 이 전략은 `src/main.py`, `src/configs/api_routers.py`, `src/domains/magic_eye/services/magic_eye_service.py` 파일의 코드에 반영되어 있습니다. 특히 `src/configs/api_routers.py`에서 `APP_ENV`가 "local"일 때만 `magic_eye_router`가 로드되는 부분을 확인할 수 있습니다.
 
 ## 개발 규칙
 
