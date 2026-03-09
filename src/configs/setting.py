@@ -41,7 +41,9 @@ GCP_SERVICE_ACCOUNT_JSON = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
 WEB_HOST = os.getenv("WEB_HOST", REMOTE_HOST)
 WEB_PORT = os.getenv("WEB_PORT")
 # WEB_URL = f"http://{WEB_HOST}:{WEB_PORT}"
-WEB_URL = os.getenv("WEB_URL")
+GAME_HUB_URL = os.getenv("GAME_HUB_URL")
+DISCOVEREX_URL = os.getenv("DISCOVEREX_URL")
+MAGIC_EYE_URL = os.getenv("MAGIC_EYE_URL")
 
 # 허깅페이스
 HF_TOKEN = os.getenv("HF_TOKEN")
