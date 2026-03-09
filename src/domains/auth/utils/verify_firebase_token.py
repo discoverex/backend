@@ -1,10 +1,10 @@
-import os
 import json
 import time
+
 import firebase_admin
-from fastapi import HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from firebase_admin import credentials, auth
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from firebase_admin import auth, credentials
 
 from src.configs.setting import FIREBASE_SERVICE_ACCOUNT_JSON
 

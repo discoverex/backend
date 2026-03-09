@@ -15,8 +15,10 @@ dependencies = [
     "langchain>=1.2.10",
     "langchain-openai>=1.1.10",
     "numpy>=2.0.0",
+    "passlib[bcrypt]>=1.7.4",
     "pillow>=10.0.0",
     "psycopg2-binary>=2.9.11",
+    "python-jose[cryptography]>=3.5.0",
     "uvicorn>=0.30.0",
 ]
 
