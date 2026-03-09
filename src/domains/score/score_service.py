@@ -29,6 +29,7 @@ class ScoreService:
     def get_user_scores(
         self, 
         user_id: Optional[UUID] = None, 
+        game_type: Optional[str] = None,
         start_date: Optional[datetime] = None, 
         end_date: Optional[datetime] = None
     ) -> List[ScoreResponse]:
@@ -39,6 +40,7 @@ class ScoreService:
         # SQL 파라미터 매핑 (NULL 대응)
         params = (
             user_id, user_id,
+            game_type, game_type,
             start_date, start_date,
             end_date, end_date
         )
