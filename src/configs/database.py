@@ -22,6 +22,27 @@ def get_db_connection():
         logger.error(f"데이터베이스 연결 실패: {str(e)}")
         raise e
 
+def check_db_connection():
+    """
+    DB 서버의 생존 여부를 확인합니다. (Health Check용)
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            # 가장 가벼운 쿼리로 실제 응답 확인
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            if result:
+                return True
+    except Exception as e:
+        logger.error(f"DB Health Check 실패: {str(e)}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+    return False
+
 def get_db_cursor():
     """
     FastAPI Depends에서 사용할 수 있는 DB 커서 생성기입니다.

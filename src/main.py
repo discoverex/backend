@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from common.dtos.common_response import CustomJSONResponse
 from configs.api_routers import API_ROUTERS
+from configs.database import check_db_connection
 from configs.logging_config import LOGGING_CONFIG
 from configs.origins import origins
 from configs.setting import APP_ENV, APP_PORT, REMOTE_HOST
@@ -47,10 +48,15 @@ async def error_logging_middleware(request: Request, call_next):
 # 커스덤 에러 핸들러 초기화
 init_exception_handlers(app)
 
-if APP_ENV == "local":
-    allow_origins = ["*"]
-else:
-    allow_origins = origins
+try:
+    if APP_ENV == "local":
+        allow_origins = ["*"]
+    else:
+        # origins 리스트가 비어있거나 None이 포함되어 있는지 검증
+        allow_origins = [o for o in origins if o]
+except Exception as e:
+    print(f"CORS origins loading error: {e}")
+    allow_origins = ["*"] # 실패 시 fallback
 
 app.add_middleware(
     CORSMiddleware,
@@ -76,10 +82,9 @@ def read_root():
 # health check
 @app.get("/health")
 def health_check() -> Dict[str, str]:
-    health_status = {"status": "ok", "db": "connected", "redis": "connected"}
+    health_status = {"status": "ok", "db": "connected"}
     try:
-        # check_db_connection()
-        # check_redis_connection()
+        check_db_connection()
         return health_status
     except Exception as e:
         # 하나라도 실패하면 503 에러 반환
@@ -98,11 +103,11 @@ if __name__ == "__main__":
 
     if APP_ENV == "local":
         effective_port = APP_PORT
+        effective_host = "127.0.0.1"
     else:
-        # env_port가 있으면 사용하고, 없으면 APP_PORT를 사용 (둘 다 없으면 8080)
-        effective_port = int(env_port) if env_port else (APP_PORT or 8080)
-
-    effective_host = "127.0.0.1" if APP_ENV == "local" else "0.0.0.0"
+        # 프로덕션에서는 Cloud Run이 주입하는 PORT를 최우선으로, 없으면 8080
+        effective_port = int(os.environ.get("PORT", 8080))
+        effective_host = "0.0.0.0"
 
     LOGGING_CONFIG["handlers"]["default"]["stream"] = "ext://sys.stdout"
     LOGGING_CONFIG["handlers"]["access"]["stream"] = "ext://sys.stdout"
