@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -78,13 +79,18 @@ class GCSImageLoader:
         blob_names = self.list_blobs(prefix)
         return self.download_multiple_images_as_bytes(blob_names)
 
-    def generate_signed_url(self, blob_name: str, expiration: int = 3600) -> str | None:
+    def generate_signed_url(self, blob_name: str, expiration_minutes: int = 60) -> str | None:
         """
         프론트엔드에서 직접 접근 가능한 서명된 URL을 생성합니다.
         """
         try:
             blob = self._bucket.blob(blob_name)
-            return blob.generate_signed_url(expiration=expiration, method="GET")
+            # expiration에 정수 대신 timedelta 객체를 전달하세요.
+            return blob.generate_signed_url(
+                version="v4",  # 최신 v4 서명 방식 권장
+                expiration=timedelta(minutes=expiration_minutes),
+                method="GET"
+            )
         except Exception as e:
             logger.error(f"GCS 서명된 URL 생성 실패 ({blob_name}): {str(e)}")
             return None
