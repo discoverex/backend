@@ -9,8 +9,6 @@ from configs.api_routers import API_ROUTERS
 from configs.logging_config import LOGGING_CONFIG
 from configs.origins import origins
 from configs.setting import APP_ENV, APP_PORT, REMOTE_HOST
-# from configs.database import check_db_connection
-# from configs.redis_conn import check_redis_connection
 from utils.exceptions import init_exception_handlers
 from utils.lifespan_handlers import shutdown_event_handler, startup_event_handler
 
@@ -49,9 +47,14 @@ async def error_logging_middleware(request: Request, call_next):
 # 커스덤 에러 핸들러 초기화
 init_exception_handlers(app)
 
+if APP_ENV == "local":
+    allow_origins = ["*"]
+else:
+    allow_origins = origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # 허용할 출처(CORS) 목록
+    allow_origins=allow_origins,  # 허용할 출처(CORS) 목록
     allow_credentials=True,  # 쿠키 등 자격 증명 허용 여부
     allow_methods=["*"],  # 모든 HTTP 메서드 허용 (GET, POST 등)
     allow_headers=["*"],  # 모든 HTTP 헤더 허용
