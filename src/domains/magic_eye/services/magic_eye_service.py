@@ -10,7 +10,7 @@ from src.domains.magic_eye.dtos.magic_eye_dtos import (
     MagicEyeMetadataQuery,
     MagicEyeQuizResponse,
 )
-from src.utils.gcs_image_loader import GCSImageLoader, get_gcs_image_loader
+from src.domains.magic_eye.utils.gcs_image_loader import GCSImageLoader, get_gcs_image_loader
 from src.utils.logger import logger
 
 
@@ -51,6 +51,12 @@ class MagicEyeService:
                 # 백슬래시를 슬래시로 통일 (윈도우 경로 대응)
                 p_path = item.get("problem_path", "").replace("\\", "/")
                 a_path = item.get("answer_path", "").replace("\\", "/")
+
+                # magic-eye/ 접두사가 없으면 추가 (GCS 내 실제 경로 반영)
+                if p_path and not p_path.startswith("magic-eye/"):
+                    p_path = f"magic-eye/{p_path}"
+                if a_path and not a_path.startswith("magic-eye/"):
+                    a_path = f"magic-eye/{a_path}"
 
                 p_url = self.gcs_loader.generate_signed_url(p_path, bucket_name=self.bucket_name)
                 a_url = self.gcs_loader.generate_signed_url(a_path, bucket_name=self.bucket_name)

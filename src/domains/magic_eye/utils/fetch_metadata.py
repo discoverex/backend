@@ -14,7 +14,7 @@ if str(BASE_DIR) not in sys.path:
 
 # ruff: noqa: E402
 from src.configs import setting
-from src.utils.gcs_image_loader import get_gcs_image_loader
+from src.domains.magic_eye.utils.gcs_image_loader import get_gcs_image_loader
 from src.utils.logger import logger
 
 

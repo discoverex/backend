@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from src.utils.gcs_image_loader import GCSImageLoader, get_gcs_image_loader
+from src.domains.magic_eye.utils.gcs_image_loader import GCSImageLoader, get_gcs_image_loader
 from src.utils.logger import logger
 
 
