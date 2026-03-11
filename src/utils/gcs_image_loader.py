@@ -36,29 +36,31 @@ class GCSImageLoader:
             logger.error(f"GCS 클라이언트 초기화 실패: {str(e)}")
             raise e
 
-    def list_blobs(self, prefix: str = "") -> list[str]:
+    def list_blobs(self, prefix: str = "", bucket_name: str = None) -> list[str]:
         """
         특정 접두사(폴더 경로) 내의 모든 파일(blob) 이름을 반환합니다.
         """
         try:
-            blobs = self._client.list_blobs(self.bucket_name, prefix=prefix)
+            target_bucket_name = bucket_name or self.bucket_name
+            blobs = self._client.list_blobs(target_bucket_name, prefix=prefix)
             return [blob.name for blob in blobs if not blob.name.endswith("/")]
         except Exception as e:
-            logger.error(f"GCS 파일 목록 조회 실패 (prefix={prefix}): {str(e)}")
+            logger.error(f"GCS 파일 목록 조회 실패 (bucket={bucket_name or self.bucket_name}, prefix={prefix}): {str(e)}")
             return []
 
-    def download_image_as_bytes(self, blob_name: str) -> bytes | None:
+    def download_image_as_bytes(self, blob_name: str, bucket_name: str = None) -> bytes | None:
         """
         단일 이미지 파일을 바이트 형식으로 다운로드합니다.
         """
         try:
-            blob = self._bucket.blob(blob_name)
+            target_bucket = self._client.bucket(bucket_name) if bucket_name else self._bucket
+            blob = target_bucket.blob(blob_name)
             if not blob.exists():
-                logger.warning(f"GCS 파일을 찾을 수 없음: {blob_name}")
+                logger.warning(f"GCS 파일을 찾을 수 없음: {blob_name} (bucket={bucket_name or self.bucket_name})")
                 return None
             return blob.download_as_bytes()
         except Exception as e:
-            logger.error(f"GCS 이미지 다운로드 실패 ({blob_name}): {str(e)}")
+            logger.error(f"GCS 이미지 다운로드 실패 ({blob_name}, bucket={bucket_name or self.bucket_name}): {str(e)}")
             return None
 
     def download_multiple_images_as_bytes(self, blob_names: list[str]) -> list[tuple[str, bytes]]:

@@ -103,10 +103,23 @@ uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
 
 2. src/configs: 애플리케이션의 런타임 환경을 제어하는 설정 파일들의 집합입니다.
 
-- 환경 변수 관리 (Env Vars)
-- 데이터베이스 커넥션 풀 및 외부 라이브러리 설정
-- 로그 출력 규칙 및 전역 예외 처리(Exception Handling)
-- 외부 노출 라우터 리스트 등
+- **setting.py**: 환경 변수(`load_dotenv`)를 로드하고 프로젝트 전역에서 사용하는 상수를 정의합니다.
+    - `BASE_DIR`: 프로젝트 루트 경로 (`Path(__file__).resolve().parent.parent.parent`)
+    - `DB_*`: 데이터베이스 연결 정보 (Host, Port, User, Password, Name)
+    - `APP_*`: 애플리케이션 실행 환경 (Host, Port, Env)
+    - `BUCKET_NAME`, `GCP_SERVICE_ACCOUNT_JSON`: GCP 클라우드 스토리지 설정
+    - `GAME_HUB_*`, `DISCOVEREX_*`, `MAGIC_EYE_*`: 프론트엔드 서비스별 포트 및 URL 정보
+    - `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `HF_TOKEN`: 외부 API 키
+- **database.py**: PostgreSQL 연결 및 커서 관리를 담당합니다.
+    - `get_db_connection()`: `psycopg2`를 사용한 DB 연결 생성
+    - `get_db_cursor()`: FastAPI 의존성 주입(`Depends`)용 커서 생성기 (트랜잭션 관리 포함)
+    - `check_db_connection()`: DB 상태 확인용 Health Check 함수
+- **api_routers.py**: 애플리케이션의 모든 도메인 라우터를 하나로 모으는 역할을 합니다.
+    - `API_ROUTERS`: `main.py`에서 등록할 라우터 객체들의 리스트
+- **origins.py**: CORS 설정을 위한 허용 출처(Origin) 리스트를 관리합니다.
+    - `origins`: 로컬 개발 및 운영 환경의 프론트엔드 URL 리스트
+- **logging_config.py**: 애플리케이션의 로그 출력 형식을 제어합니다.
+- **http_client.py**: 비동기 HTTP 요청을 위한 `httpx.AsyncClient` 설정을 관리합니다.
 
 3. src/domains: 실제 비즈니스 로직이 수행되는 핵심 계층입니다. Swagger 문서상에서도 이 도메인 단위를 기준으로 API 태그가 분류됩니다.
 
