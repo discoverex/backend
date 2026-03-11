@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-from src.configs.setting import BASE_DIR, BUCKET_NAME
+from src.configs.setting import BASE_DIR
 
 # 프로젝트 루트(BASE_DIR)를 sys.path에 추가하여 상위 모듈 임포트 가능하게 함
 current_file = Path(__file__).resolve()
@@ -16,6 +16,8 @@ if str(BASE_DIR) not in sys.path:
 from src.configs import setting
 from src.utils.gcs_image_loader import get_gcs_image_loader
 from src.utils.logger import logger
+
+
 def fetch_and_save_magic_eye_metadata():
     """
     GCS에서 매직아이 메타데이터(CSV)를 가져와 "split": "test"인 정보만 JSON으로 저장합니다.
@@ -23,8 +25,8 @@ def fetch_and_save_magic_eye_metadata():
     bucket_name = "discoverex-image-storage"
     blob_name = "magic-eye/metadata.csv"
 
-    # 저장될 폴더 및 파일 경로 (BASE_DIR/metadata/)
-    metadata_dir = setting.BASE_DIR / "metadata"
+    # 저장될 폴더 및 파일 경로 (BASE_DIR/src/domains/magic_eye/consts/)
+    metadata_dir = setting.BASE_DIR / "src" / "domains" / "magic_eye" / "consts"
     metadata_dir.mkdir(parents=True, exist_ok=True)
     json_file_path = metadata_dir / "magic_eye_metadata.json"
 

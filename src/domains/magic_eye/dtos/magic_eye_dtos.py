@@ -1,3 +1,4 @@
+
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -21,3 +22,22 @@ class MagicEyeMetadataQuery(BaseModel):
 
     asset_id: Optional[str] = Field(None, description="필터링할 에셋 아이디")
     file_number: Optional[int] = Field(None, description="필터링할 파일 번호")
+
+
+class MagicEyeCandidate(BaseModel):
+    """매직아이 퀴즈 정답 후보 모델"""
+    id: int = Field(..., description="후보 식별 ID (0~4)")
+    asset_id: str = Field(..., description="에셋 아이디")
+    display_name: str = Field(..., description="표시 이름")
+    problem_url: str = Field(..., description="문제 이미지 URL (서명됨)")
+    answer_url: str = Field(..., description="정답 이미지 URL (서명됨)")
+
+class MagicEyeCorrectAnswer(BaseModel):
+    """매직아이 퀴즈 정답 정보 모델"""
+    id: int = Field(..., description="정답인 후보의 식별 ID")
+    asset_id: str = Field(..., description="정답 에셋 아이디")
+
+class MagicEyeQuizResponse(BaseModel):
+    """매직아이 퀴즈 응답 모델"""
+    candidates: list[MagicEyeCandidate] = Field(..., description="5개의 정답 후보 리스트")
+    correct_answer: MagicEyeCorrectAnswer = Field(..., description="정답 정보")

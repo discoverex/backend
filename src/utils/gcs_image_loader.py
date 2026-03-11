@@ -81,12 +81,13 @@ class GCSImageLoader:
         blob_names = self.list_blobs(prefix)
         return self.download_multiple_images_as_bytes(blob_names)
 
-    def generate_signed_url(self, blob_name: str, expiration_minutes: int = 60) -> str | None:
+    def generate_signed_url(self, blob_name: str, bucket_name: str = None, expiration_minutes: int = 60) -> str | None:
         """
         프론트엔드에서 직접 접근 가능한 서명된 URL을 생성합니다.
         """
         try:
-            blob = self._bucket.blob(blob_name)
+            target_bucket = self._client.bucket(bucket_name) if bucket_name else self._bucket
+            blob = target_bucket.blob(blob_name)
             # expiration에 정수 대신 timedelta 객체를 전달하세요.
             return blob.generate_signed_url(
                 version="v4",  # 최신 v4 서명 방식 권장
@@ -94,7 +95,7 @@ class GCSImageLoader:
                 method="GET"
             )
         except Exception as e:
-            logger.error(f"GCS 서명된 URL 생성 실패 ({blob_name}): {str(e)}")
+            logger.error(f"GCS 서명된 URL 생성 실패 ({blob_name}, bucket={bucket_name or self.bucket_name}): {str(e)}")
             return None
 
 _gcs_image_loader = None
