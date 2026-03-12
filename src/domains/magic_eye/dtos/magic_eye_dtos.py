@@ -42,6 +42,7 @@ class MagicEyeCorrectAnswer(BaseModel):
     """매직아이 퀴즈 정답 정보 모델"""
     id: int = Field(..., description="정답인 후보의 식별 ID")
     asset_id: str = Field(..., description="정답 에셋 아이디")
+    description: str = Field(..., description="정답 상세 설명 (프롬프트/목격자 증언)")
 
 class MagicEyeQuizResponse(BaseModel):
     """매직아이 퀴즈 응답 모델"""

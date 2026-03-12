@@ -14,6 +14,7 @@ from src.domains.magic_eye.utils.gcs_image_loader import (
     GCSImageLoader,
     get_gcs_image_loader,
 )
+from src.domains.magic_eye.utils.witness_testimony import WitnessTestimonyGenerator
 from src.utils.logger import logger
 
 
@@ -21,6 +22,7 @@ class MagicEyeService:
     def __init__(self, gcs_loader: GCSImageLoader = None):
         """매직아이 서비스의 기본 골격입니다."""
         self.gcs_loader = gcs_loader or get_gcs_image_loader()
+        self.witness_generator = WitnessTestimonyGenerator()
         self.metadata_path = BASE_DIR / "src" / "domains" / "magic_eye" / "consts" / "magic_eye_metadata.json"
         self.bucket_name = BUCKET_NAME
 
@@ -28,7 +30,7 @@ class MagicEyeService:
         """
         객관식 매직아이 퀴즈를 출제합니다.
         로컬 메타데이터에서 요청한 개수(count)만큼 랜덤 추출하고 서명된 URL을 생성합니다.
-        count가 5 미만이면 5로, 50 초과면 50으로 자동 조정됩니다.
+        LLM을 활용하여 목격자 증언을 생성합니다.
         """
         try:
             message = None
@@ -59,12 +61,9 @@ class MagicEyeService:
             candidates = []
 
             for i, item in enumerate(samples):
-                # GCS 서명된 URL 생성
-                # 백슬래시를 슬래시로 통일 (윈도우 경로 대응)
                 p_path = item.get("problem_path", "").replace("\\", "/")
                 a_path = item.get("answer_path", "").replace("\\", "/")
 
-                # magic-eye/ 접두사가 없으면 추가 (GCS 내 실제 경로 반영)
                 if p_path and not p_path.startswith("magic-eye/"):
                     p_path = f"magic-eye/{p_path}"
                 if a_path and not a_path.startswith("magic-eye/"):
@@ -84,13 +83,22 @@ class MagicEyeService:
             # 정답 하나 선택
             correct_idx = random.randint(0, count - 1)
             correct_item = candidates[correct_idx]
+            
+            # 3. 오직 정답에 대해서만 목격자 증언 생성 (토큰 최적화)
+            # 메타데이터에서 해당 정답의 원본 설명을 찾음
+            correct_metadata = samples[correct_idx]
+            testimony = await self.witness_generator.generate_testimony(
+                description=correct_metadata.get("description", ""),
+                asset_id=correct_metadata.get("asset_id", "")
+            )
 
             return MagicEyeQuizResponse(
                 total_count=len(candidates),
                 candidates=candidates,
                 correct_answer=MagicEyeCorrectAnswer(
                     id=correct_idx,
-                    asset_id=correct_item.asset_id
+                    asset_id=correct_item.asset_id,
+                    description=testimony
                 )
             ), message
 
