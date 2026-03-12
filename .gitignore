@@ -45,8 +45,12 @@ tmp/
 
 # firebase auth
 serviceAccountKey.json
+src/configs/discoverex-63c38-firebase-adminsdk-fbsvc-c2cc75e5bb.json
 
 # debug
 debug_outputs
 
-src/configs/discoverex-63c38-firebase-adminsdk-fbsvc-c2cc75e5bb.json
+# Magic Eye Metadata
+src/domains/magic_eye/consts/magic_eye_metadata.json
+src/domains/magic_eye/consts/magic_eye_metadata.etag
+

@@ -63,6 +63,18 @@ class GCSImageLoader:
             logger.error(f"GCS 이미지 다운로드 실패 ({blob_name}, bucket={bucket_name or self.bucket_name}): {str(e)}")
             return None
 
+    def get_blob_etag(self, blob_name: str, bucket_name: str = None) -> str | None:
+        """
+        GCS 파일의 ETag를 가져옵니다. (변경 사항 감지용)
+        """
+        try:
+            target_bucket = self._client.bucket(bucket_name) if bucket_name else self._bucket
+            blob = target_bucket.get_blob(blob_name)
+            return blob.etag if blob else None
+        except Exception as e:
+            logger.error(f"GCS ETag 조회 실패 ({blob_name}, bucket={bucket_name or self.bucket_name}): {str(e)}")
+            return None
+
     def download_multiple_images_as_bytes(self, blob_names: list[str]) -> list[tuple[str, bytes]]:
         """
         여러 이미지 파일을 한 번에 조회하여 (이름, 바이트) 리스트로 반환합니다.
