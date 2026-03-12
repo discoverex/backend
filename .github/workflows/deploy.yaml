@@ -23,25 +23,18 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      # 2. Docker 인증 (access token 사용)
-      - name: 'Docker Login'
-        uses: 'docker/login-action@v3'
-        with:
-          registry: 'asia-northeast3-docker.pkg.dev'
-          username: 'oauth2accesstoken'
-          password: '${{ steps.auth.outputs.access_token }}'
-
-      # 3. gcloud SDK 설정
+      # 2. gcloud SDK 설정
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
-      # 4. Docker 빌드 및 푸시
+      # 3. Docker 인증 및 빌드/푸시
       - name: Build and Push Container
         run: |-
+          gcloud auth configure-docker asia-northeast3-docker.pkg.dev
           docker build -t asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/apps/backend:${{ github.sha }} .
           docker push asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/apps/backend:${{ github.sha }}
 
-      # 5. Cloud Run 배포
+      # 4. Cloud Run 배포
       - name: Deploy to Cloud Run
         env:
           # JSON을 셸 환경 변수에 먼저 담아둡니다.
