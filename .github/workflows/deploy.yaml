@@ -17,12 +17,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. GCP 인증 (Secrets에 저장한 JSON 키 사용)
+      # 1. GCP 인증 (유효한 GCP_SERVICE_ACCOUNT_JSON 사용)
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
-          token_format: 'access_token' # 액세스 토큰 생성을 명시
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}'
+          token_format: 'access_token'
 
       # 2. Docker 인증 (access token 직접 사용으로 gcloud 인증 오류 방지)
       - name: 'Docker Login'
