@@ -30,7 +30,7 @@ class MagicEyeService:
             if not self.metadata_path.exists():
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="메타데이터 파일이 없습니다. fetch_metadata.py를 먼저 실행하세요."
+                    detail="매직아이 메타데이터 파일이 존재하지 않습니다. 서버가 정상적으로 시작되었는지 확인하세요."
                 )
 
             with open(self.metadata_path, "r", encoding="utf-8") as f:
@@ -99,7 +99,7 @@ class MagicEyeService:
                 logger.error(f"메타데이터 파일이 존재하지 않습니다: {self.metadata_path}")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="매직아이 메타데이터 파일을 찾을 수 없습니다. (먼저 fetch_metadata.py를 실행하세요)"
+                    detail="매직아이 메타데이터 파일을 찾을 수 없습니다. 서버가 정상적으로 시작되었는지 확인하세요."
                 )
 
             with open(self.metadata_path, "r", encoding="utf-8") as f:

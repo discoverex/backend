@@ -85,12 +85,15 @@ WEB_PORT=3000
 개발 환경에서 애플리케이션을 실행하려면 다음 명령을 사용하십시오:
 
 ```bash
-uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn src.main:app --reload --host 127.0.0.1 --port 8080
+```
+```bash
+(실행 오류 시) PYTHONPATH=src uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 이렇게 하면 Uvicorn 서버가 시작되고 코드가 변경될 때 자동으로 다시 로드됩니다.
 
-`http://127.0.0.1:8000/docs`에서 API 문서에 접근할 수 있습니다.
+`http://127.0.0.1:8080/docs`에서 API 문서에 접근할 수 있습니다.
 
 ## 개발 규칙
 
