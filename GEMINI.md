@@ -57,7 +57,7 @@
 
 # 애플리케이션 설정
 APP_HOST=127.0.0.1
-APP_PORT=8000
+APP_PORT=8080
 APP_ENV=local
 
 # 원격 호스트
@@ -88,7 +88,7 @@ WEB_PORT=3000
 uvicorn src.main:app --reload --host 127.0.0.1 --port 8080
 ```
 ```bash
-(실행 오류 시) PYTHONPATH=src uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
+(실행 오류 시) PYTHONPATH=src uvicorn src.main:app --reload --host 127.0.0.1 --port 8080
 ```
 
 이렇게 하면 Uvicorn 서버가 시작되고 코드가 변경될 때 자동으로 다시 로드됩니다.
@@ -157,7 +157,7 @@ uvicorn src.main:app --reload --host 127.0.0.1 --port 8080
 
 4. 데이터 흐름 (Data Flow)
 
-- Router: 요청 접수 및 응답 반환 (로직 최소화)
+- Router: 요청 접수 및 응답 반환 (로직 최소화). **모든 JSON 응답은 `src/common/dtos/wrapped_response.py`의 `WrappedResponse`로 감싸서 반환해야 합니다.**
 - Service: 비즈니스 유효성 검사 및 데이터 가공 (핵심 로직)
 - Repository (Queries): 데이터베이스와의 상호작용
 - 참고
@@ -169,8 +169,8 @@ uvicorn src.main:app --reload --host 127.0.0.1 --port 8080
 
 6. Gemini 협업 및 응답 규칙
 
-- 언어 설정: 제미나이(AI)와의 모든 대화 및 제미나이의 모든 응답은 한국어로 진행합니다.
-- 코드 가이드: 제미나이는 코드를 제안할 때 본 문서에 명시된 OOP 구조와 Ruff 스타일을 반영해야 합니다.
+- **언어 설정**: 제미나이(AI)와의 모든 대화, 제미나이의 모든 응답, 그리고 **도구 호출 전의 작업 과정 설명(생각 및 의도)**은 모두 한국어로 진행합니다.
+- **코드 가이드**: 제미나이는 코드를 제안할 때 본 문서에 명시된 OOP 구조와 Ruff 스타일을 반영해야 합니다.
 
 ---
 

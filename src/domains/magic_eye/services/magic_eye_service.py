@@ -3,14 +3,17 @@ import random
 
 from fastapi import HTTPException, status
 
-from src.configs.setting import BUCKET_NAME, BASE_DIR
+from src.configs.setting import BASE_DIR, BUCKET_NAME
 from src.domains.magic_eye.dtos.magic_eye_dtos import (
     MagicEyeCandidate,
     MagicEyeCorrectAnswer,
     MagicEyeMetadataQuery,
     MagicEyeQuizResponse,
 )
-from src.domains.magic_eye.utils.gcs_image_loader import GCSImageLoader, get_gcs_image_loader
+from src.domains.magic_eye.utils.gcs_image_loader import (
+    GCSImageLoader,
+    get_gcs_image_loader,
+)
 from src.utils.logger import logger
 
 
@@ -21,12 +24,21 @@ class MagicEyeService:
         self.metadata_path = BASE_DIR / "src" / "domains" / "magic_eye" / "consts" / "magic_eye_metadata.json"
         self.bucket_name = BUCKET_NAME
 
-    async def get_magic_eye_quiz(self) -> MagicEyeQuizResponse:
+    async def get_magic_eye_quiz(self, count: int = 5) -> tuple[MagicEyeQuizResponse, str | None]:
         """
         객관식 매직아이 퀴즈를 출제합니다.
-        로컬 메타데이터에서 5개를 랜덤 추출하고 서명된 URL을 생성합니다.
+        로컬 메타데이터에서 요청한 개수(count)만큼 랜덤 추출하고 서명된 URL을 생성합니다.
+        count가 5 미만이면 5로, 50 초과면 50으로 자동 조정됩니다.
         """
         try:
+            message = None
+            if count < 5:
+                count = 5
+                message = "퀴즈 후보 개수가 최소값(5)보다 작아 5개로 조정되었습니다."
+            elif count > 50:
+                count = 50
+                message = "퀴즈 후보 개수가 최대값(50)보다 커 50개로 조정되었습니다."
+
             if not self.metadata_path.exists():
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -36,14 +48,14 @@ class MagicEyeService:
             with open(self.metadata_path, "r", encoding="utf-8") as f:
                 all_metadata = json.load(f)
 
-            if len(all_metadata) < 5:
+            if len(all_metadata) < count:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="메타데이터 건수가 퀴즈 출제에 부족합니다 (최소 5건 필요)."
+                    detail=f"메타데이터 건수가 퀴즈 출제에 부족합니다 (최소 {count}건 필요)."
                 )
 
-            # 5개 랜덤 샘플링
-            samples = random.sample(all_metadata, 5)
+            # 요청한 개수만큼 랜덤 샘플링
+            samples = random.sample(all_metadata, count)
             candidates = []
 
             for i, item in enumerate(samples):
@@ -70,16 +82,17 @@ class MagicEyeService:
                 ))
 
             # 정답 하나 선택
-            correct_idx = random.randint(0, 4)
+            correct_idx = random.randint(0, count - 1)
             correct_item = candidates[correct_idx]
 
             return MagicEyeQuizResponse(
+                total_count=len(candidates),
                 candidates=candidates,
                 correct_answer=MagicEyeCorrectAnswer(
                     id=correct_idx,
                     asset_id=correct_item.asset_id
                 )
-            )
+            ), message
 
         except HTTPException:
             raise

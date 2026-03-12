@@ -24,9 +24,15 @@ class MagicEyeMetadataQuery(BaseModel):
     file_number: Optional[int] = Field(None, description="필터링할 파일 번호")
 
 
+class MagicEyeQuizQuery(BaseModel):
+    """매직아이 퀴즈 생성 쿼리 파라미터"""
+
+    count: int = Field(5, description="추출할 퀴즈 후보 개수 (5~50, 범위를 벗어나면 최소/최대값으로 자동 조정됨)")
+
+
 class MagicEyeCandidate(BaseModel):
     """매직아이 퀴즈 정답 후보 모델"""
-    id: int = Field(..., description="후보 식별 ID (0~4)")
+    id: int = Field(..., description="후보 식별 ID")
     asset_id: str = Field(..., description="에셋 아이디")
     display_name: str = Field(..., description="표시 이름")
     problem_url: str = Field(..., description="문제 이미지 URL (서명됨)")
@@ -39,5 +45,6 @@ class MagicEyeCorrectAnswer(BaseModel):
 
 class MagicEyeQuizResponse(BaseModel):
     """매직아이 퀴즈 응답 모델"""
-    candidates: list[MagicEyeCandidate] = Field(..., description="5개의 정답 후보 리스트")
+    total_count: int = Field(..., description="전체 퀴즈 후보 개수")
+    candidates: list[MagicEyeCandidate] = Field(..., description="퀴즈 후보 리스트")
     correct_answer: MagicEyeCorrectAnswer = Field(..., description="정답 정보")
