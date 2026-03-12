@@ -3,6 +3,7 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [ main ] # main 브랜치에 push될 때 실행
+  workflow_dispatch: # 수동 실행 활성화
 
 # 동일한 워크플로우가 실행 중이면 이전 작업은 자동 취소
 concurrency:
