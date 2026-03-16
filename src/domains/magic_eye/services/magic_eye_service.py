@@ -27,14 +27,14 @@ class MagicEyeService:
         self.bucket_name = BUCKET_NAME
 
     def _get_unique_metadata(self, metadata: list[dict]) -> list[dict]:
-        """asset_id를 기준으로 중복된 메타데이터를 제거합니다."""
-        seen_ids = set()
+        """problem_path를 기준으로 중복된 메타데이터를 제거합니다."""
+        seen_paths = set()
         unique_metadata = []
         for item in metadata:
-            asset_id = item.get("asset_id")
-            if asset_id and asset_id not in seen_ids:
+            p_path = item.get("problem_path")
+            if p_path and p_path not in seen_paths:
                 unique_metadata.append(item)
-                seen_ids.add(asset_id)
+                seen_paths.add(p_path)
         return unique_metadata
 
     async def get_magic_eye_quiz(self, count: int = 5) -> tuple[MagicEyeQuizResponse, str | None]:
@@ -61,14 +61,19 @@ class MagicEyeService:
             with open(self.metadata_path, "r", encoding="utf-8") as f:
                 all_metadata = json.load(f)
 
-            # 중복 데이터 제거
+            # 중복 데이터 제거 (파일 경로 기준)
             all_metadata = self._get_unique_metadata(all_metadata)
 
             if len(all_metadata) < count:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"메타데이터 건수가 퀴즈 출제에 부족합니다 (중복 제거 후 최소 {count}건 필요)."
-                )
+                # 부족할 경우 에러 대신 현재 가능한 최대치로 조정
+                message = f"요청하신 개수({count}개)보다 사용 가능한 유니크 이미지 개수({len(all_metadata)}개)가 적어 전체 이미지를 반환합니다."
+                count = len(all_metadata)
+                
+                if count < 1:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="사용 가능한 매직아이 메타데이터가 없습니다."
+                    )
 
             # 요청한 개수만큼 랜덤 샘플링
             samples = random.sample(all_metadata, count)
@@ -140,7 +145,7 @@ class MagicEyeService:
             with open(self.metadata_path, "r", encoding="utf-8") as f:
                 metadata = json.load(f)
 
-            # 중복 데이터 제거 (asset_id 기준)
+            # 중복 데이터 제거 (이미지 경로 기준)
             metadata = self._get_unique_metadata(metadata)
 
             # 필터링 적용
