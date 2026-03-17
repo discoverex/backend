@@ -4,11 +4,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 
-from domains.score.score_service import ScoreService
+from src.domains.score.score_service import ScoreService
 from src.common.dtos.wrapped_response import WrappedResponse
 from src.configs.database import get_db_cursor
 from src.domains.auth.auth_service import AuthService
-from src.domains.game.game_service import GameService # GameService 임포트
+from src.domains.game.game_service import GameService
 from src.domains.score.dtos.score_dto import ScoreCreateRequest, ScoreResponse
 from src.domains.auth.utils.verify_token import verify_user
 

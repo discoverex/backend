@@ -49,3 +49,16 @@ class MagicEyeQuizResponse(BaseModel):
     total_count: int = Field(..., description="전체 퀴즈 후보 개수")
     candidates: list[MagicEyeCandidate] = Field(..., description="퀴즈 후보 리스트")
     correct_answer: MagicEyeCorrectAnswer = Field(..., description="정답 정보")
+
+class MagicEyeFinderQuery(BaseModel):
+    model_filename: str = Field(
+        ...,
+        description="조회할 ONNX 모델의 전체 파일명",
+        examples=["ai_lv5.onnx"],
+        min_length=5,
+        pattern=r".*\.onnx$"
+    )
+
+class MagicEyeFinderResponse(BaseModel):
+    model_name: str = Field(..., description="요청한 모델명", examples=["ai_lv5.onnx"])
+    singed_url: str = Field(..., description="서명된 모델 주소(15분 유효)", examples=["https://storage.googleapis.com/discoverex-magic-eye-models/models/onnx/ai_lv5.onnx?..."])

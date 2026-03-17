@@ -3,7 +3,7 @@ import random
 
 from fastapi import HTTPException, status
 
-from src.configs.setting import BASE_DIR, BUCKET_NAME
+from src.configs.setting import BASE_DIR, IMAGE_BUCKET_NAME
 from src.domains.magic_eye.dtos.magic_eye_dtos import (
     MagicEyeCandidate,
     MagicEyeCorrectAnswer,
@@ -14,17 +14,19 @@ from src.domains.magic_eye.utils.gcs_image_loader import (
     GCSImageLoader,
     get_gcs_image_loader,
 )
+from src.domains.magic_eye.utils.gcs_model_loader import get_gcs_model_loader
 from src.domains.magic_eye.utils.witness_testimony import WitnessTestimonyGenerator
 from src.utils.logger import logger
 
 
 class MagicEyeService:
-    def __init__(self, gcs_loader: GCSImageLoader = None):
+    def __init__(self):
         """매직아이 서비스의 기본 골격입니다."""
-        self.gcs_loader = gcs_loader or get_gcs_image_loader()
+        self.image_loader = get_gcs_image_loader()
+        self.model_loader = get_gcs_model_loader()
         self.witness_generator = WitnessTestimonyGenerator()
         self.metadata_path = BASE_DIR / "src" / "domains" / "magic_eye" / "consts" / "magic_eye_metadata.json"
-        self.bucket_name = BUCKET_NAME
+        self.bucket_name = IMAGE_BUCKET_NAME
 
     def _get_unique_metadata(self, metadata: list[dict]) -> list[dict]:
         """problem_path를 기준으로 중복된 메타데이터를 제거합니다."""
@@ -88,8 +90,8 @@ class MagicEyeService:
                 if a_path and not a_path.startswith("magic-eye/"):
                     a_path = f"magic-eye/{a_path}"
 
-                p_url = self.gcs_loader.generate_signed_url(p_path, bucket_name=self.bucket_name)
-                a_url = self.gcs_loader.generate_signed_url(a_path, bucket_name=self.bucket_name)
+                p_url = self.image_loader.generate_signed_url(p_path, bucket_name=self.bucket_name)
+                a_url = self.image_loader.generate_signed_url(a_path, bucket_name=self.bucket_name)
 
                 candidates.append(MagicEyeCandidate(
                     id=i,
@@ -165,3 +167,30 @@ class MagicEyeService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"메타데이터 조회 중 오류가 발생했습니다: {str(e)}"
             )
+
+    async def get_model_download_url(self, model_filename: str) -> str | None:
+        """
+        프론트엔드 WebGPU 가속을 위해 비공개 버킷의 모델 접근용 서명된 URL을 생성합니다.
+        파일 존재 여부를 먼저 확인한 후, 존재할 경우에만 15분 유효한 URL을 반환합니다.
+        """
+        try:
+            # 경로 조합 (models/onnx/파일명.onnx)
+            blob_path = f"models/onnx/{model_filename}"
+
+            # 1. 파일 존재 여부 확인
+            if not self.model_loader.check_model_exists(blob_path):
+                logger.warning(f"모델 파일을 찾을 수 없습니다: {blob_path}")
+                return None
+
+            # 2. 존재할 경우 15분(15) 유효한 URL 생성
+            signed_url = self.model_loader.generate_signed_url(
+                blob_name=blob_path,
+                expiration_minutes=15
+            )
+
+            # 결과 반환 (3항 연산자 사용)
+            return signed_url if signed_url else None
+
+        except Exception as e:
+            logger.error(f"모델 서명 URL 생성 중 오류 발생: {str(e)}")
+            return None

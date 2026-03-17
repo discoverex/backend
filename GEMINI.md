@@ -110,7 +110,7 @@ uvicorn src.main:app --reload --host 127.0.0.1 --port 8080
     - `BASE_DIR`: 프로젝트 루트 경로 (`Path(__file__).resolve().parent.parent.parent`)
     - `DB_*`: 데이터베이스 연결 정보 (Host, Port, User, Password, Name)
     - `APP_*`: 애플리케이션 실행 환경 (Host, Port, Env)
-    - `BUCKET_NAME`, `GCP_SERVICE_ACCOUNT_JSON`: GCP 클라우드 스토리지 설정
+    - `IMAGE_BUCKET_NAME`, `GCP_SERVICE_ACCOUNT_JSON`: GCP 클라우드 스토리지 설정
     - `GAME_HUB_*`, `DISCOVEREX_*`, `MAGIC_EYE_*`: 프론트엔드 서비스별 포트 및 URL 정보
     - `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `HF_TOKEN`: 외부 API 키
 - **database.py**: PostgreSQL 연결 및 커서 관리를 담당합니다.

@@ -27,7 +27,8 @@ APP_PORT = int(os.getenv("APP_PORT"))
 APP_ENV = os.getenv("APP_ENV")  # local, dev, prod 등
 
 # services
-BUCKET_NAME = os.getenv("BUCKET_NAME")
+IMAGE_BUCKET_NAME = os.getenv("IMAGE_BUCKET_NAME")
+MODEL_BUCKET_NAME = os.getenv("MODEL_BUCKET_NAME")
 GCP_SERVICE_ACCOUNT_JSON = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
 
 # 프론트엔드

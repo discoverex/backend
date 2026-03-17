@@ -14,7 +14,7 @@ class GCSImageLoader:
     """
 
     def __init__(self):
-        self.bucket_name = setting.BUCKET_NAME
+        self.bucket_name = setting.IMAGE_BUCKET_NAME
         self.credentials_info = setting.GCP_SERVICE_ACCOUNT_JSON
         self._client = self._init_client()
         self._bucket = self._client.bucket(self.bucket_name)
