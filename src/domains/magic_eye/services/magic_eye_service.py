@@ -8,15 +8,14 @@ from src.domains.magic_eye.dtos.magic_eye_dtos import (
     MagicEyeCandidate,
     MagicEyeCorrectAnswer,
     MagicEyeMetadataQuery,
-    MagicEyeQuizResponse,
+    MagicEyeQuizResponse, MagicEyeFinderResponse,
 )
 from src.domains.magic_eye.utils.gcs_image_loader import (
-    GCSImageLoader,
     get_gcs_image_loader,
 )
 from src.domains.magic_eye.utils.gcs_model_loader import get_gcs_model_loader
 from src.domains.magic_eye.utils.witness_testimony import WitnessTestimonyGenerator
-from src.utils.logger import logger
+from src.utils.logger import warning, error
 
 
 class MagicEyeService:
@@ -70,7 +69,7 @@ class MagicEyeService:
                 # 부족할 경우 에러 대신 현재 가능한 최대치로 조정
                 message = f"요청하신 개수({count}개)보다 사용 가능한 유니크 이미지 개수({len(all_metadata)}개)가 적어 전체 이미지를 반환합니다."
                 count = len(all_metadata)
-                
+
                 if count < 1:
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -104,7 +103,7 @@ class MagicEyeService:
             # 정답 하나 선택
             correct_idx = random.randint(0, count - 1)
             correct_item = candidates[correct_idx]
-            
+
             # 3. 오직 정답에 대해서만 목격자 증언 생성 (토큰 최적화)
             # 메타데이터에서 해당 정답의 원본 설명을 찾음
             correct_metadata = samples[correct_idx]
@@ -126,7 +125,7 @@ class MagicEyeService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"매직아이 퀴즈 생성 중 오류 발생: {str(e)}")
+            error(f"매직아이 퀴즈 생성 중 오류 발생: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"퀴즈 생성 중 오류가 발생했습니다: {str(e)}"
@@ -138,7 +137,7 @@ class MagicEyeService:
         """
         try:
             if not self.metadata_path.exists():
-                logger.error(f"메타데이터 파일이 존재하지 않습니다: {self.metadata_path}")
+                error(f"메타데이터 파일이 존재하지 않습니다: {self.metadata_path}")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="매직아이 메타데이터 파일을 찾을 수 없습니다. 서버가 정상적으로 시작되었는지 확인하세요."
@@ -162,35 +161,36 @@ class MagicEyeService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"매직아이 메타데이터 조회 중 오류 발생: {str(e)}")
+            error(f"매직아이 메타데이터 조회 중 오류 발생: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"메타데이터 조회 중 오류가 발생했습니다: {str(e)}"
             )
 
-    async def get_model_download_url(self, model_filename: str) -> str | None:
-        """
-        프론트엔드 WebGPU 가속을 위해 비공개 버킷의 모델 접근용 서명된 URL을 생성합니다.
-        파일 존재 여부를 먼저 확인한 후, 존재할 경우에만 15분 유효한 URL을 반환합니다.
-        """
+    async def get_model_download_url(self, model_filename: str) -> MagicEyeFinderResponse | None:
         try:
-            # 경로 조합 (models/onnx/파일명.onnx)
             blob_path = f"models/onnx/{model_filename}"
+            metadata = self.model_loader.get_model_metadata(blob_path)
 
-            # 1. 파일 존재 여부 확인
-            if not self.model_loader.check_model_exists(blob_path):
-                logger.warning(f"모델 파일을 찾을 수 없습니다: {blob_path}")
+            if not metadata:
+                warning(f"모델 파일을 찾을 수 없습니다: {blob_path}")
                 return None
 
-            # 2. 존재할 경우 15분(15) 유효한 URL 생성
             signed_url = self.model_loader.generate_signed_url(
                 blob_name=blob_path,
                 expiration_minutes=15
             )
 
-            # 결과 반환 (3항 연산자 사용)
-            return signed_url if signed_url else None
+            if not signed_url:
+                return None
+
+            # 딕셔너리처럼 .get()을 쓰는 대신 속성(.version)에 직접 접근합니다.
+            return MagicEyeFinderResponse(
+                model_name=model_filename,
+                singed_url=signed_url,
+                version=metadata.version
+            )
 
         except Exception as e:
-            logger.error(f"모델 서명 URL 생성 중 오류 발생: {str(e)}")
+            error(f"모델 정보 조회 중 오류 발생: {str(e)}")  # 여기서 'ModelMeta' object has no attribute 'get' 발생 중
             return None

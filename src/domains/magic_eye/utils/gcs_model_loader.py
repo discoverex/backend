@@ -1,5 +1,7 @@
 from src.configs import setting
-from .gcs_image_loader import GCSImageLoader  # 기존 로더의 init 로직 등을 재사용하기 위해 상속
+from src.domains.magic_eye.utils.gcs_image_loader import GCSImageLoader
+from src.domains.magic_eye.dtos.magic_eye_dtos import ModelMeta
+from src.utils.logger import error
 
 
 class GCSModelLoader(GCSImageLoader):
@@ -35,6 +37,18 @@ class GCSModelLoader(GCSImageLoader):
         blob_name = model_name if model_name.endswith(".onnx") else f"{model_name}.onnx"
         blob = self._bucket.blob(blob_name)
         return blob.exists()
+
+    def get_model_metadata(self, blob_name: str) -> ModelMeta | None:
+        """
+        GCS 오브젝트의 메타데이터를 조회하여 버전(updated) 정보를 반환합니다.
+        """
+        blob = self._bucket.get_blob(blob_name)
+        if not blob:
+            error(f"[ERROR] '{blob_name}'을 찾을 수 없습니다. 경로를 다시 확인하세요.")
+            return None
+        # updated(최종 수정 시간)나 etag를 버전으로 사용합니다.
+        # 타임스탬프를 문자열로 변환하여 사용자가 알아보기 쉽게 합니다.
+        return ModelMeta(version=str(blob.updated.timestamp()), size=blob.size)
 
 
 # 싱글톤 인스턴스 관리

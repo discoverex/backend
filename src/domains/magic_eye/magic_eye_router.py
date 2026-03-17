@@ -39,17 +39,18 @@ async def get_magic_eye_finder(query: Annotated[MagicEyeFinderQuery, Depends()])
     """
     프론트엔드 WebGPU 가속을 위해 비공개 버킷의 모델 접근용 서명된 URL을 발급해 반환합니다.
     """
-    signed_url = await magic_eye_service.get_model_download_url(model_filename=query.model_filename)
+    result = await magic_eye_service.get_model_download_url(model_filename=query.model_filename)
 
-    if not signed_url:
+    if not result:
         raise HTTPException(
             status_code=404,
             detail=f"모델 파일 '{query.model_filename}'을 찾을 수 없습니다."
         )
 
+        # DTO 생성 시 값을 명시적으로 매핑
     return WrappedResponse(
-        data=MagicEyeFinderResponse(model_name=query.model_filename, singed_url=signed_url),
-        message=f"{query.model_filename} 접근 URL이 발급되었습니다."
+        data=result,
+        message=f"{query.model_filename} 접근 정보가 발급되었습니다."
     )
 
 @magic_eye_router.get(

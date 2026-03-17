@@ -1,4 +1,4 @@
-
+from typing import NamedTuple
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -62,3 +62,8 @@ class MagicEyeFinderQuery(BaseModel):
 class MagicEyeFinderResponse(BaseModel):
     model_name: str = Field(..., description="요청한 모델명", examples=["ai_lv5.onnx"])
     singed_url: str = Field(..., description="서명된 모델 주소(15분 유효)", examples=["https://storage.googleapis.com/discoverex-magic-eye-models/models/onnx/ai_lv5.onnx?..."])
+    version: str = Field(..., description="모델 버전 (GCS 파일의 ETag 또는 최종 수정 시간 기반)")
+
+class ModelMeta(NamedTuple):
+    version: str
+    size: int
