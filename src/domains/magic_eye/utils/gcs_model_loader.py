@@ -1,6 +1,6 @@
 from src.configs import setting
-from src.domains.magic_eye.utils.gcs_image_loader import GCSImageLoader
 from src.domains.magic_eye.dtos.magic_eye_dtos import ModelMeta
+from src.domains.magic_eye.utils.gcs_image_loader import GCSImageLoader
 from src.utils.logger import error
 
 

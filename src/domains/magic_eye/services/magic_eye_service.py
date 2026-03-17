@@ -184,7 +184,6 @@ class MagicEyeService:
             if not signed_url:
                 return None
 
-            # 딕셔너리처럼 .get()을 쓰는 대신 속성(.version)에 직접 접근합니다.
             return MagicEyeFinderResponse(
                 model_name=model_filename,
                 singed_url=signed_url,
