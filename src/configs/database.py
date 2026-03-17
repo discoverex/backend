@@ -1,8 +1,11 @@
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, register_uuid
 
 from src.configs import setting
 from src.utils.logger import logger
+
+# UUID
+register_uuid()
 
 
 def get_db_connection():

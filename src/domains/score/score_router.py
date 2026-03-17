@@ -8,6 +8,7 @@ from domains.score.score_service import ScoreService
 from src.common.dtos.wrapped_response import WrappedResponse
 from src.configs.database import get_db_cursor
 from src.domains.auth.auth_service import AuthService
+from src.domains.game.game_service import GameService # GameService 임포트
 from src.domains.score.dtos.score_dto import ScoreCreateRequest, ScoreResponse
 from src.domains.auth.utils.verify_token import verify_user
 
@@ -18,6 +19,9 @@ def get_score_service(cursor=Depends(get_db_cursor)) -> ScoreService:
 
 def get_auth_service(cursor=Depends(get_db_cursor)) -> AuthService:
     return AuthService(cursor)
+
+def get_game_service(cursor=Depends(get_db_cursor)) -> GameService: # GameService 의존성 제공자 추가
+    return GameService(cursor)
 
 @score_router.post(
     "/",
@@ -30,7 +34,8 @@ async def post_score(
     request: ScoreCreateRequest,
     user_info: dict = Depends(verify_user),
     score_service: ScoreService = Depends(get_score_service),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    game_service: GameService = Depends(get_game_service) # GameService 주입
 ):
     # 1. 토큰에서 추출한 이메일로 DB 상의 사용자 정보를 확인
     email = user_info.get("email")
@@ -40,7 +45,11 @@ async def post_score(
     user_data = auth_service.handle_login_or_register(email=email, name=name)
 
     # 3. 점수 기록
-    result = score_service.register_score(user_id=user_data.user_id, request=request)
+    result = score_service.register_score(
+        user_id=user_data.user_id,
+        request=request,
+        game_service=game_service # game_service 전달
+    )
 
     return WrappedResponse(
         data=result,

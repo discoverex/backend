@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
+from src.domains.game.game_service import GameService
 from src.domains.score.dtos.score_dto import ScoreCreateRequest, ScoreResponse
 from src.utils.load_sql import load_sql
 
@@ -14,10 +15,17 @@ class ScoreService:
     def __init__(self, cursor):
         self.cursor = cursor
 
-    def register_score(self, user_id: UUID, request: ScoreCreateRequest) -> ScoreResponse:
+    def register_score(self, user_id: UUID, request: ScoreCreateRequest, game_service: GameService) -> ScoreResponse:
         """
         사용자의 게임 점수를 DB에 등록합니다.
         """
+        # 1. game_id 조회 또는 생성
+        game_service.get_or_create_game(
+            game_id=request.game_id,
+            game_type=request.game_type,
+            user_id=user_id
+        )
+
         query = load_sql("domains/score", "insert_score")
         self.cursor.execute(
             query,
@@ -27,10 +35,10 @@ class ScoreService:
         return ScoreResponse(**result)
 
     def get_user_scores(
-        self, 
-        user_id: Optional[UUID] = None, 
+        self,
+        user_id: Optional[UUID] = None,
         game_type: Optional[str] = None,
-        start_date: Optional[datetime] = None, 
+        start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
     ) -> List[ScoreResponse]:
         """
@@ -46,5 +54,5 @@ class ScoreService:
         )
         self.cursor.execute(query, params)
         results = self.cursor.fetchall()
-        
+
         return [ScoreResponse(**row) for row in results]
