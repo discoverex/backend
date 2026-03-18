@@ -11,6 +11,27 @@ discoverex_router = APIRouter(prefix="/discoverex", tags=["Discoverex"])
 def get_discoverex_service(cursor=Depends(get_db_cursor)) -> DiscoverexService:
     return DiscoverexService(cursor)
 
+@discoverex_router.get(
+    "/jobs",
+    response_model=WrappedResponse[list[str]],
+    summary="작업 폴더 목록 조회",
+    description="MinIO 버킷의 jobs/ 경로 아래에 있는 폴더(작업) 목록을 조회합니다. (인증 필요)"
+)
+async def get_job_list(
+    # user_info: dict = Depends(verify_user),
+    service: DiscoverexService = Depends(get_discoverex_service)
+):
+    """
+    MinIO에서 작업 폴더 목록을 가져옵니다.
+    """
+    job_folders = service.get_job_list()
+    
+    return WrappedResponse(
+        data=job_folders,
+        message="작업 목록을 성공적으로 조회했습니다."
+    )
+
+
 @discoverex_router.post(
     "/logs",
     status_code=status.HTTP_201_CREATED,

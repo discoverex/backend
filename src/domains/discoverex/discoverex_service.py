@@ -1,4 +1,6 @@
+from fastapi import HTTPException, status
 from src.domains.discoverex.dtos.play_log_dto import PlayLogCreateRequest
+from src.domains.discoverex.utils.minio_utils import get_job_folders
 from src.utils.load_sql import load_sql
 from src.utils.logger import logger
 
@@ -10,6 +12,25 @@ class DiscoverexService:
 
     def __init__(self, cursor):
         self.cursor = cursor
+
+    def get_job_list(self) -> list[str]:
+        """
+        MinIO에서 작업 폴더 목록을 조회합니다.
+        """
+        try:
+            return get_job_folders()
+        except Exception as e:
+            # 403 에러가 포함되어 있다면 명시적으로 권한 부족 오류를 발생시킵니다.
+            if "403" in str(e):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"MinIO 접근 권한이 거부되었습니다 (Cloudflare/MinIO 403 Forbidden). 상세 에러: {str(e)}"
+                )
+            # 그 외의 경우 500 에러를 발생시킵니다.
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"MinIO 서버 통신 중 오류가 발생했습니다: {str(e)}"
+            )
 
     def save_play_logs(self, request_data: PlayLogCreateRequest) -> bool:
         """

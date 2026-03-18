@@ -7,6 +7,7 @@ from firebase_admin import credentials
 
 # from configs.database import check_db_connection
 from src.configs.http_client import http_holder
+from src.configs.minio import initialize_minio
 # from configs.redis_conn import check_redis_connection
 from src.configs import setting
 from src.configs.setting import APP_PORT, FIREBASE_SERVICE_ACCOUNT_JSON
@@ -125,6 +126,7 @@ def startup_event_handler():
     # check_redis_connection()
     _initialize_http_client()
     _initialize_firebase()
+    initialize_minio()
     _fetch_and_save_magic_eye_metadata()
     _print_startup_message()
 
