@@ -4,7 +4,7 @@ from src.common.dtos.wrapped_response import WrappedResponse
 from src.configs.database import get_db_cursor
 from src.domains.discoverex.discoverex_service import DiscoverexService
 from src.domains.discoverex.dtos.play_log_dto import PlayLogCreateRequest
-from src.domains.discoverex.dtos.theme_dto import ThemeListResponse
+from src.domains.discoverex.dtos.theme_dto import ThemeListResponse, ThemeLayersResponse
 from src.domains.auth.utils.verify_token import verify_user
 
 discoverex_router = APIRouter(prefix="/discoverex", tags=["Discoverex"])
@@ -24,7 +24,6 @@ async def post_play_logs(
     user_info: dict = Depends(verify_user),
     service: DiscoverexService = Depends(get_discoverex_service)
 ):
-
     """
     게임 플레이 로그 리스트를 받아 DB에 저장합니다.
     """
@@ -53,4 +52,25 @@ async def get_themes(
     return WrappedResponse(
         data=ThemeListResponse(themes=themes),
         message="테마 목록이 성공적으로 조회되었습니다."
+    )
+
+@discoverex_router.get(
+    "/themes/{theme_name}/layers",
+    status_code=status.HTTP_200_OK,
+    response_model=WrappedResponse[ThemeLayersResponse],
+    summary="테마별 레이어 이미지 목록 조회",
+    description="특정 테마의 레이어 이미지(hide-and-seek/[theme_name]/outputs/layers/) 목록과 서명된 URL을 반환합니다."
+)
+async def get_theme_layers(
+    theme_name: str,
+    service: DiscoverexService = Depends(get_discoverex_service)
+):
+    """
+    특정 테마의 레이어 이미지와 서명된 URL 목록을 조회합니다.
+    """
+    result = service.get_theme_layers(theme_name)
+    
+    return WrappedResponse(
+        data=result,
+        message=f"'{theme_name}' 테마의 레이어 목록이 성공적으로 조회되었습니다."
     )
