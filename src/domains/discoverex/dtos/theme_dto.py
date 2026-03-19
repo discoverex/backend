@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict, Any, Optional
 
 class ThemeListResponse(BaseModel):
     """
@@ -20,3 +20,5 @@ class ThemeLayersResponse(BaseModel):
     """
     theme: str
     layers: List[LayerImage]
+    manifest: Optional[Dict[str, Any]] = None
+    lottie: Optional[str] = None

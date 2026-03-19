@@ -26,21 +26,39 @@ class DiscoverexService:
 
     def get_theme_layers(self, theme_name: str) -> ThemeLayersResponse:
         """
-        특정 테마의 레이어 이미지(hide-and-seek/[theme_name]/outputs/layers/) 목록과 서명된 URL을 반환합니다.
+        특정 테마의 레이어 이미지, manifest JSON, lottie 파일 정보를 반환합니다.
         """
         try:
-            prefix = f"hide-and-seek/{theme_name}/outputs/layers/"
-            blob_names = self.gcs_util.list_blobs(prefix)
+            output_prefix = f"hide-and-seek/{theme_name}/outputs/"
+            layer_prefix = f"{output_prefix}layers/"
             
+            # 1. 레이어 이미지 목록 조회 (Signed URL)
+            blob_names = self.gcs_util.list_blobs(layer_prefix)
             layers = []
             for blob_name in blob_names:
                 signed_url = self.gcs_util.generate_signed_url(blob_name)
                 if signed_url:
-                    # 파일명만 추출 (예: '.../layer1.png' -> 'layer1.png')
                     display_name = blob_name.split("/")[-1]
                     layers.append(LayerImage(name=display_name, url=signed_url))
             
-            return ThemeLayersResponse(theme=theme_name, layers=layers)
+            # 2. manifest.json 파일 내용 읽기
+            manifest_content = self.gcs_util.read_json_blob(f"{output_prefix}manifest.json")
+            
+            # 3. .lottie 파일 조회 (Signed URL)
+            # outputs/ 경로의 파일 중 .lottie로 끝나는 첫 번째 파일을 찾습니다.
+            output_blobs = self.gcs_util.list_blobs(output_prefix)
+            lottie_url = None
+            for b in output_blobs:
+                if b.endswith(".lottie"):
+                    lottie_url = self.gcs_util.generate_signed_url(b)
+                    break
+            
+            return ThemeLayersResponse(
+                theme=theme_name,
+                layers=layers,
+                manifest=manifest_content,
+                lottie=lottie_url
+            )
         except Exception as e:
             logger.error(f"테마 레이어 조회 중 오류 발생 (theme={theme_name}): {str(e)}")
             return ThemeLayersResponse(theme=theme_name, layers=[])

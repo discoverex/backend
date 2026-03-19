@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 from src.configs import setting
 from src.configs.gcs import gcs_holder
@@ -13,6 +14,20 @@ class GCSUtil:
         self.bucket_name = setting.IMAGE_BUCKET_NAME
         self._client = gcs_holder.client
         self._bucket = self._client.bucket(self.bucket_name)
+
+    def read_json_blob(self, blob_name: str) -> dict | None:
+        """
+        GCS에서 JSON 파일을 읽어 딕셔너리로 반환합니다.
+        """
+        try:
+            blob = self._bucket.blob(blob_name)
+            if not blob.exists():
+                return None
+            content = blob.download_as_text()
+            return json.loads(content)
+        except Exception as e:
+            logger.error(f"GCS JSON 파일 읽기 실패 ({blob_name}): {str(e)}")
+            return None
 
     def list_subfolders(self, prefix: str) -> list[str]:
         """
