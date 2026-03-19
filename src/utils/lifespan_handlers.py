@@ -7,7 +7,7 @@ from firebase_admin import credentials
 
 # from configs.database import check_db_connection
 from src.configs.http_client import http_holder
-# from configs.redis_conn import check_redis_connection
+from src.configs.gcs import initialize_gcs_client
 from src.configs import setting
 from src.configs.setting import APP_PORT, FIREBASE_SERVICE_ACCOUNT_JSON
 from src.domains.magic_eye.utils.gcs_image_loader import get_gcs_image_loader
@@ -19,6 +19,13 @@ def _initialize_http_client():
     http_holder.client = httpx.AsyncClient(
         timeout=httpx.Timeout(10.0), limits=httpx.Limits(max_connections=100, max_keepalive_connections=20)
     )
+
+
+def _initialize_gcs():
+    """
+    전역 GCS 클라이언트를 초기화합니다.
+    """
+    initialize_gcs_client()
 
 
 def _initialize_firebase():
@@ -124,6 +131,7 @@ def startup_event_handler():
     # check_db_connection()
     # check_redis_connection()
     _initialize_http_client()
+    _initialize_gcs()
     _initialize_firebase()
     _fetch_and_save_magic_eye_metadata()
     _print_startup_message()

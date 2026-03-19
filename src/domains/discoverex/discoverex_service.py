@@ -1,4 +1,5 @@
 from src.domains.discoverex.dtos.play_log_dto import PlayLogCreateRequest
+from src.domains.discoverex.utils.gcs_util import get_gcs_folder_util
 from src.utils.load_sql import load_sql
 from src.utils.logger import logger
 
@@ -10,6 +11,17 @@ class DiscoverexService:
 
     def __init__(self, cursor):
         self.cursor = cursor
+        self.gcs_util = get_gcs_folder_util()
+
+    def get_theme_list(self) -> list[str]:
+        """
+        hide-and-seek/ 경로 하위의 테마(폴더) 목록을 조회합니다.
+        """
+        try:
+            return self.gcs_util.list_subfolders("hide-and-seek/")
+        except Exception as e:
+            logger.error(f"테마 목록 조회 중 오류 발생: {str(e)}")
+            return []
 
     def save_play_logs(self, request_data: PlayLogCreateRequest) -> bool:
         """

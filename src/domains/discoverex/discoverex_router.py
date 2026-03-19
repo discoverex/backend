@@ -4,6 +4,7 @@ from src.common.dtos.wrapped_response import WrappedResponse
 from src.configs.database import get_db_cursor
 from src.domains.discoverex.discoverex_service import DiscoverexService
 from src.domains.discoverex.dtos.play_log_dto import PlayLogCreateRequest
+from src.domains.discoverex.dtos.theme_dto import ThemeListResponse
 from src.domains.auth.utils.verify_token import verify_user
 
 discoverex_router = APIRouter(prefix="/discoverex", tags=["Discoverex"])
@@ -32,4 +33,24 @@ async def post_play_logs(
     return WrappedResponse(
         data=success,
         message="플레이 로그가 성공적으로 기록되었습니다."
+    )
+
+@discoverex_router.get(
+    "/themes",
+    status_code=status.HTTP_200_OK,
+    response_model=WrappedResponse[ThemeListResponse],
+    summary="게임 테마 목록 조회",
+    description="GCS의 hide-and-seek/ 경로 하위의 폴더 목록을 조회하여 테마 리스트를 반환합니다."
+)
+async def get_themes(
+    service: DiscoverexService = Depends(get_discoverex_service)
+):
+    """
+    GCS에서 테마 폴더 목록을 조회합니다.
+    """
+    themes = service.get_theme_list()
+    
+    return WrappedResponse(
+        data=ThemeListResponse(themes=themes),
+        message="테마 목록이 성공적으로 조회되었습니다."
     )

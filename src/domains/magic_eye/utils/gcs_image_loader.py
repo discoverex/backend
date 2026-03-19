@@ -1,10 +1,7 @@
-import json
 from datetime import timedelta
 
-from google.cloud import storage
-from google.oauth2 import service_account
-
 from src.configs import setting
+from src.configs.gcs import gcs_holder
 from src.utils.logger import logger
 
 
@@ -15,26 +12,8 @@ class GCSImageLoader:
 
     def __init__(self):
         self.bucket_name = setting.IMAGE_BUCKET_NAME
-        self.credentials_info = setting.GCP_SERVICE_ACCOUNT_JSON
-        self._client = self._init_client()
+        self._client = gcs_holder.client
         self._bucket = self._client.bucket(self.bucket_name)
-
-    def _init_client(self) -> storage.Client:
-        """
-        GCP 서비스 계정 정보를 사용하여 Storage 클라이언트를 초기화합니다.
-        """
-        try:
-            # GCP_SERVICE_ACCOUNT_JSON이 JSON 문자열인 경우와 파일 경로인 경우를 모두 대응
-            if self.credentials_info.startswith("{"):
-                info = json.loads(self.credentials_info)
-                credentials = service_account.Credentials.from_service_account_info(info)
-                return storage.Client(credentials=credentials)
-            else:
-                # 파일 경로인 경우
-                return storage.Client.from_service_account_json(self.credentials_info)
-        except Exception as e:
-            logger.error(f"GCS 클라이언트 초기화 실패: {str(e)}")
-            raise e
 
     def list_blobs(self, prefix: str = "", bucket_name: str = None) -> list[str]:
         """
@@ -100,9 +79,8 @@ class GCSImageLoader:
         try:
             target_bucket = self._client.bucket(bucket_name) if bucket_name else self._bucket
             blob = target_bucket.blob(blob_name)
-            # expiration에 정수 대신 timedelta 객체를 전달하세요.
             return blob.generate_signed_url(
-                version="v4",  # 최신 v4 서명 방식 권장
+                version="v4",
                 expiration=timedelta(minutes=expiration_minutes),
                 method="GET"
             )
