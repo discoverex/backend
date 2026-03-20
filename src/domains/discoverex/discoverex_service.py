@@ -1,5 +1,5 @@
 from src.domains.discoverex.dtos.play_log_dto import PlayLogCreateRequest
-from src.domains.discoverex.dtos.theme_dto import ThemeLayersResponse, LayerImage
+from src.domains.discoverex.dtos.theme_dto import ThemeLayersResponse, LayerImage, DeliveryBundle, SceneRef
 from src.domains.discoverex.utils.gcs_util import get_gcs_util
 from src.utils.load_sql import load_sql
 from src.utils.logger import logger
@@ -41,8 +41,22 @@ class DiscoverexService:
                     display_name = blob_name.split("/")[-1]
                     layers.append(LayerImage(name=display_name, url=signed_url))
             
-            # 2. manifest.json 파일 내용 읽기
-            manifest_content = self.gcs_util.read_json_blob(f"{output_prefix}manifest.json")
+            # 2. manifest.json 파일 내용 읽기 및 필터링
+            manifest_json = self.gcs_util.read_json_blob(f"{output_prefix}manifest.json")
+            
+            delivery_bundle = None
+            if manifest_json and "manifest" in manifest_json:
+                raw_bundle = manifest_json["manifest"].get("delivery_bundle", {})
+                scene_ref_data = raw_bundle.get("scene_ref", {})
+                
+                delivery_bundle = DeliveryBundle(
+                    scene_ref=SceneRef(
+                        scene_id=scene_ref_data.get("scene_id", ""),
+                        version_id=scene_ref_data.get("version_id", "")
+                    ),
+                    playable=raw_bundle.get("playable", {}),
+                    answer_key=raw_bundle.get("answer_key", {})
+                )
             
             # 3. .lottie 파일 조회 (Signed URL)
             # outputs/ 경로의 파일 중 .lottie로 끝나는 첫 번째 파일을 찾습니다.
@@ -56,7 +70,7 @@ class DiscoverexService:
             return ThemeLayersResponse(
                 theme=theme_name,
                 layers=layers,
-                manifest=manifest_content,
+                manifest=delivery_bundle,
                 lottie=lottie_url
             )
         except Exception as e:
