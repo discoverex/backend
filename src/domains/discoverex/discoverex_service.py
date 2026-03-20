@@ -45,18 +45,21 @@ class DiscoverexService:
             manifest_json = self.gcs_util.read_json_blob(f"{output_prefix}manifest.json")
             
             delivery_bundle = None
-            if manifest_json and "manifest" in manifest_json:
-                raw_bundle = manifest_json["manifest"].get("delivery_bundle", {})
-                scene_ref_data = raw_bundle.get("scene_ref", {})
+            if manifest_json:
+                # "manifest" 키가 있으면 그 안에서 찾고, 없으면 전체 데이터에서 찾습니다.
+                base_data = manifest_json.get("manifest", manifest_json)
+                raw_bundle = base_data.get("delivery_bundle", {})
                 
-                delivery_bundle = DeliveryBundle(
-                    scene_ref=SceneRef(
-                        scene_id=scene_ref_data.get("scene_id", ""),
-                        version_id=scene_ref_data.get("version_id", "")
-                    ),
-                    playable=raw_bundle.get("playable", {}),
-                    answer_key=raw_bundle.get("answer_key", {})
-                )
+                if raw_bundle:
+                    scene_ref_data = raw_bundle.get("scene_ref", {})
+                    delivery_bundle = DeliveryBundle(
+                        scene_ref=SceneRef(
+                            scene_id=scene_ref_data.get("scene_id", ""),
+                            version_id=scene_ref_data.get("version_id", "")
+                        ),
+                        playable=raw_bundle.get("playable", {}),
+                        answer_key=raw_bundle.get("answer_key", {})
+                    )
             
             # 3. .lottie 파일 조회 (Signed URL)
             # outputs/ 경로의 파일 중 .lottie로 끝나는 첫 번째 파일을 찾습니다.
