@@ -52,6 +52,30 @@ async def login_user(
         message="로그인 성공"
     )
 
+@auth_router.post(
+    "/logout",
+    response_model=WrappedResponse[bool],
+    summary="로그아웃",
+    description="현재 세션을 파기하고 로그아웃합니다. (Redis에서 세션 삭제)"
+)
+async def logout_user(
+    user_info: dict = Depends(verify_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """
+    로그아웃 (모든 앱 세션 삭제)
+    """
+    user_id = user_info.get("uid")
+    token = user_info.get("token")
+    
+    if user_id:
+        auth_service.logout(user_id=user_id, token=token)
+    
+    return WrappedResponse(
+        data=True,
+        message="로그아웃되었습니다."
+    )
+
 @auth_router.get(
     "/users/me",
     response_model=WrappedResponse[UserInfo],
@@ -64,6 +88,7 @@ async def get_my_profile(
 ):
     email = user_info.get("email")
     provider = user_info.get("provider", "firebase")
+    fuid = user_info.get("sub") if provider == "firebase" else None
     
     # Firebase 토큰인 경우 이름을 가져오고, 로컬 JWT인 경우 이름 정보는 DB에서 조회되므로 최소값 전달
     name = user_info.get("name") or email.split("@")[0]
@@ -72,7 +97,8 @@ async def get_my_profile(
     user_data = auth_service.handle_login_or_register(
         email=email,
         name=name,
-        sso_provider=provider
+        sso_provider=provider,
+        firebase_uid=fuid
     )
 
     return WrappedResponse(
@@ -93,7 +119,8 @@ async def update_my_name(
 ):
     # 1. 토큰의 이메일로 사용자 UUID 확보
     email = user_info.get("email")
-    user_data = auth_service.handle_login_or_register(email=email, name="")
+    fuid = user_info.get("sub") if user_info.get("provider") == "firebase" else None
+    user_data = auth_service.handle_login_or_register(email=email, name="", firebase_uid=fuid)
     
     # 2. 이름 업데이트
     updated_user = auth_service.update_user_name(user_id=user_data.user_id, name=request.name)
