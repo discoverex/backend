@@ -5,7 +5,8 @@ import httpx
 import firebase_admin
 from firebase_admin import credentials
 
-# from configs.database import check_db_connection
+from configs.database import check_db_connection
+from configs.redis_conn import check_redis_connection
 from src.configs.http_client import http_holder
 from src.configs.gcs import initialize_gcs_client
 from src.configs import setting
@@ -42,7 +43,7 @@ def _initialize_firebase():
             cred_dict = json.loads(FIREBASE_SERVICE_ACCOUNT_JSON)
             cred = credentials.Certificate(cred_dict)
             firebase_admin.initialize_app(cred)
-            info("Firebase SDK가 성공적으로 초기화되었습니다.")
+            info("✅ Firebase SDK가 성공적으로 초기화되었습니다.")
         except Exception as e:
             error(f"Firebase 초기화 실패: {str(e)}")
             # 애플리케이션 시작을 중단시키려면 raise를 사용합니다. 
@@ -128,8 +129,8 @@ def _print_startup_message():
 
 
 def startup_event_handler():
-    # check_db_connection()
-    # check_redis_connection()
+    check_db_connection()
+    check_redis_connection()
     _initialize_http_client()
     _initialize_gcs()
     _initialize_firebase()

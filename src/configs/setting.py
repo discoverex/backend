@@ -16,6 +16,10 @@ DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST", REMOTE_HOST)
 DB_PORT = int(os.getenv("DB_PORT"))
 
+# REDIS
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+REDIS_PORT = int(os.getenv("REDIS_PORT"))
+
 # LLM
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

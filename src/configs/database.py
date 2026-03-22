@@ -2,7 +2,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor, register_uuid
 
 from src.configs import setting
-from src.utils.logger import logger
+from src.utils.logger import info, error
 
 # UUID
 register_uuid()
@@ -22,7 +22,7 @@ def get_db_connection():
         )
         return conn
     except Exception as e:
-        logger.error(f"데이터베이스 연결 실패: {str(e)}")
+        error(f"데이터베이스 연결 실패: {str(e)}")
         raise e
 
 def check_db_connection():
@@ -37,9 +37,10 @@ def check_db_connection():
             cursor.execute("SELECT 1")
             result = cursor.fetchone()
             if result:
+                info(f"✅ DB와 성공적으로 연결되었습니다.")
                 return True
     except Exception as e:
-        logger.error(f"DB Health Check 실패: {str(e)}")
+        error(f"DB Health Check 실패: {str(e)}")
         return False
     finally:
         if conn:
@@ -58,7 +59,7 @@ def get_db_cursor():
         conn.commit()
     except Exception as e:
         conn.rollback()
-        logger.error(f"DB 작업 중 오류 발생: {str(e)}")
+        error(f"DB 작업 중 오류 발생: {str(e)}")
         raise e
     finally:
         cursor.close()

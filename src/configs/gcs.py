@@ -47,7 +47,7 @@ def initialize_gcs_client() -> storage.Client:
             client = storage.Client.from_service_account_json(credentials_info)
         
         gcs_holder.client = client
-        info("GCS 클라이언트가 성공적으로 초기화되었습니다.")
+        info("✅ GCS 클라이언트가 성공적으로 초기화되었습니다.")
         return client
     except Exception as e:
         error(f"GCS 클라이언트 초기화 실패: {str(e)}")
