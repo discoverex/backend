@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -9,6 +9,7 @@ class UserInfo(BaseModel):
     user_id: UUID = Field(..., description="사용자 고유 UUID")
     email: str = Field(..., description="사용자 이메일")
     name: str = Field(..., description="사용자 이름")
+    photoURL: Optional[str] = Field(None, description="사용자 프로필 이미지"),
     sso_provider: str = Field(default="none", description="SSO 제공자 (예: firebase)")
     badges: List[Any] = Field(default=[], description="사용자 뱃지 목록")
     level: int = Field(default=1, description="사용자 레벨")

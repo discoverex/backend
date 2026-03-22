@@ -91,6 +91,7 @@ async def get_my_profile(
     fuid = user_info.get("sub") if provider == "firebase" else None
     
     # Firebase 토큰인 경우 이름을 가져오고, 로컬 JWT인 경우 이름 정보는 DB에서 조회되므로 최소값 전달
+    photoURL = user_info.get("picture") or user_info.get("photoURL")
     name = user_info.get("name") or email.split("@")[0]
 
     # DB 조회 및 (필요 시) 자동 가입/SSO 연동 로직 수행
@@ -98,7 +99,8 @@ async def get_my_profile(
         email=email,
         name=name,
         sso_provider=provider,
-        firebase_uid=fuid
+        firebase_uid=fuid,
+        photoURL=photoURL
     )
 
     return WrappedResponse(

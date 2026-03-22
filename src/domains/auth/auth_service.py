@@ -106,7 +106,7 @@ class AuthService:
         
         return UserInfo(**self.cursor.fetchone())
 
-    def handle_login_or_register(self, email: str, name: str, sso_provider: str = "firebase", firebase_uid: str = None) -> UserInfo:
+    def handle_login_or_register(self, email: str, name: str, sso_provider: str = "firebase", firebase_uid: str = None, photoURL=None) -> UserInfo:
         """
         이메일로 사용자를 조회하고, 없으면 새로 가입 시킨 후 사용자 정보를 반환합니다.
         기존에 일반 가입('none') 사용자가 소셜로 접근 시 SSO 정보를 업데이트합니다.
@@ -134,7 +134,9 @@ class AuthService:
             # Firebase UID와 DB UUID 매핑 저장 (verify_user에서 사용)
             if firebase_uid:
                 self.session_manager.set_uid_mapping(f_uid=firebase_uid, db_uuid=user_id_str)
-            
+
+            user_data["photoURL"] = photoURL
+
             return UserInfo(**user_data)
 
         # 2. 신규 사용자 가입 (자동 가입)
