@@ -49,12 +49,7 @@ async def error_logging_middleware(request: Request, call_next):
 init_exception_handlers(app)
 
 try:
-    if APP_ENV == "local":
-        allow_origins = ["*"]
-    else:
-        # origins 리스트가 비어있거나 None이 포함되어 있는지 검증
-        allow_origins = [o.strip() for o in origins if o]
-        print(f"DEBUG: Final allow_origins list: {allow_origins}")
+    allow_origins = [o.strip() for o in origins if o]
 except Exception as e:
     print(f"CORS origins loading error: {e}")
     allow_origins = ["*"] # 실패 시 fallback
