@@ -49,7 +49,12 @@ async def error_logging_middleware(request: Request, call_next):
 init_exception_handlers(app)
 
 try:
-    allow_origins = [o.strip() for o in origins if o]
+    # 빈 값 제거 및 양끝 공백 제거
+    allow_origins = [o.strip().rstrip('/') for o in origins if o]
+
+    if APP_ENV == "local":
+        allow_origins = ["*"]
+    print(f"DEBUG: Final allowed origins: {allow_origins}")
 except Exception as e:
     print(f"CORS origins loading error: {e}")
     allow_origins = ["*"] # 실패 시 fallback
