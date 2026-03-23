@@ -1,5 +1,6 @@
 from src.domains.discoverex.dtos.play_log_dto import PlayLogCreateRequest
-from src.domains.discoverex.dtos.theme_dto import ThemeLayersResponse, LayerImage, DeliveryBundle, SceneRef
+from src.domains.discoverex.dtos.theme_dto import ThemeLayersResponse, LayerImage, DeliveryBundle, SceneRef, \
+    BackgroundImage
 from src.domains.discoverex.utils.gcs_util import get_gcs_util
 from src.utils.load_sql import load_sql
 from src.utils.logger import logger
@@ -29,52 +30,52 @@ class DiscoverexService:
         특정 테마의 레이어 이미지, manifest JSON, lottie 파일 정보를 반환합니다.
         """
         try:
-            output_prefix = f"hide-and-seek/{theme_name}/outputs/"
-            layer_prefix = f"{output_prefix}layers/"
+            output_prefix = f"hide-and-seek/{theme_name}"
+            layer_prefix = f"{output_prefix}/"
             
             # 1. 레이어 이미지 목록 조회 (Signed URL)
             blob_names = self.gcs_util.list_blobs(layer_prefix)
             layers = []
+            allowed_extensions = ('.png', '.lottie')
             for blob_name in blob_names:
-                signed_url = self.gcs_util.generate_signed_url(blob_name)
-                if signed_url:
-                    display_name = blob_name.split("/")[-1]
-                    layers.append(LayerImage(name=display_name, url=signed_url))
+                # 확장자 체크 (대소문자 무시)
+                if blob_name.lower().endswith(allowed_extensions):
+                    signed_url = self.gcs_util.generate_signed_url(blob_name)
+
+                    if signed_url:
+                        display_name = blob_name.split("/")[-1]
+                        layers.append(LayerImage(name=display_name, url=signed_url))
             
             # 2. manifest.json 파일 내용 읽기 및 필터링
-            manifest_json = self.gcs_util.read_json_blob(f"{output_prefix}manifest.json")
+            manifest_json = self.gcs_util.read_json_blob(f"{layer_prefix}manifest.json")
             
             delivery_bundle = None
             if manifest_json:
                 # "manifest" 키가 있으면 그 안에서 찾고, 없으면 전체 데이터에서 찾습니다.
-                base_data = manifest_json.get("manifest", manifest_json)
-                raw_bundle = base_data.get("delivery_bundle", {})
-                
+                raw_bundle = manifest_json.get("manifest", manifest_json)
+
                 if raw_bundle:
                     scene_ref_data = raw_bundle.get("scene_ref", {})
+                    background_img = raw_bundle.get("background_img", {})
                     delivery_bundle = DeliveryBundle(
                         scene_ref=SceneRef(
                             scene_id=scene_ref_data.get("scene_id", ""),
                             version_id=scene_ref_data.get("version_id", "")
                         ),
-                        playable=raw_bundle.get("playable", {}),
-                        answer_key=raw_bundle.get("answer_key", {})
+                        background_img=BackgroundImage(
+                            image_id=background_img.get("image_id", ""),
+                            src=background_img.get("src", ""),
+                            prompt=background_img.get("prompt", ""),
+                            width=background_img.get("width", 0),
+                            height=background_img.get("height", 0),
+                        ),
+                        answers=raw_bundle.get("answers", [])
                     )
-            
-            # 3. .lottie 파일 조회 (Signed URL)
-            # outputs/ 경로의 파일 중 .lottie로 끝나는 첫 번째 파일을 찾습니다.
-            output_blobs = self.gcs_util.list_blobs(output_prefix)
-            lottie_url = None
-            for b in output_blobs:
-                if b.endswith(".lottie"):
-                    lottie_url = self.gcs_util.generate_signed_url(b)
-                    break
             
             return ThemeLayersResponse(
                 theme=theme_name,
                 layers=layers,
                 manifest=delivery_bundle,
-                lottie=lottie_url
             )
         except Exception as e:
             logger.error(f"테마 레이어 조회 중 오류 발생 (theme={theme_name}): {str(e)}")

@@ -21,13 +21,35 @@ class SceneRef(BaseModel):
     scene_id: str
     version_id: str
 
+class BackgroundImage(BaseModel):
+    image_id: str
+    src: str
+    prompt: str
+    width: int
+    height: int
+
+class BBox(BaseModel):
+    x: float
+    y: float
+    w: float
+    h: float
+
+class Answer(BaseModel):
+    lottie_id: str
+    name: str
+    src: str
+    bbox: BBox
+    prompt: str
+    order: int
+
+
 class DeliveryBundle(BaseModel):
     """
     manifest 내 delivery_bundle 정보 중 선별된 필드들
     """
     scene_ref: SceneRef
-    playable: Dict[str, Any]
-    answer_key: Dict[str, Any]
+    background_img: BackgroundImage
+    answers: List[Answer]
 
 class ThemeLayersResponse(BaseModel):
     """
@@ -36,4 +58,3 @@ class ThemeLayersResponse(BaseModel):
     theme: str
     layers: List[LayerImage]
     manifest: Optional[DeliveryBundle] = None
-    lottie: Optional[str] = None

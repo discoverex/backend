@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from fastapi import HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -14,19 +15,33 @@ ALGORITHM = "HS256"
 
 from src.domains.auth.utils.session_manager import SessionManager
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 session_manager = SessionManager()
 
 async def verify_user(
     request: Request, 
-    res: HTTPAuthorizationCredentials = Depends(security),
+    res: Optional[HTTPAuthorizationCredentials] = Depends(security),
     cursor = Depends(get_db_cursor)
 ):
     """
     자체 발급 JWT 또는 파이어베이스 토큰을 검증하여 사용자 정보를 반환합니다.
-    /auth/users/me 또는 /auth/logout 경로인 경우 세션 상태와 상관없이 토큰만 유효하면 통과시킵니다.
+    헤더(Authorization) 또는 쿠키(access_token)에서 토큰을 추출하여 Next.js SSR을 지원합니다.
     """
-    token = res.credentials.strip()
+    # 1. 헤더 또는 쿠키에서 토큰 확인
+    token = None
+    if res and res.credentials:
+        token = res.credentials.strip()
+    else:
+        # 헤더에 없으면 쿠키에서 확인 (Next.js SSR 지원)
+        token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="인증 정보가 유효하지 않거나 토큰이 없습니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     path = request.url.path
     # 세션 체크 및 로그아웃 시간 비교 예외 경로
     skip_session_check = path.endswith("/auth/users/me") or path.endswith("/auth/logout")
@@ -92,7 +107,8 @@ async def verify_user(
             firebase_payload["uid"] = db_uuid
         else:
             firebase_payload["uid"] = f_uid
-
+        
+        firebase_payload["token"] = token
         return firebase_payload
 
     # 모든 인증 수단 실패 시

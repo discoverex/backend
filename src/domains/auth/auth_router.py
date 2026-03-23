@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from src.common.dtos.wrapped_response import WrappedResponse
 from src.configs.database import get_db_cursor
 from src.domains.auth.auth_service import AuthService
@@ -41,12 +41,23 @@ async def register_user(
 )
 async def login_user(
     request: UserLoginRequest,
+    response: Response,
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
     이메일/비밀번호 로그인 (JWT 발급)
     """
     token = auth_service.authenticate_user(request.email, request.password)
+
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=60*60*24*7, # 7일간 유지
+    )
+    
     return WrappedResponse(
         data=token,
         message="로그인 성공"
@@ -59,6 +70,7 @@ async def login_user(
     description="현재 세션을 파기하고 로그아웃합니다. (Redis에서 세션 삭제)"
 )
 async def logout_user(
+    response: Response,
     user_info: dict = Depends(verify_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
@@ -70,6 +82,9 @@ async def logout_user(
     
     if user_id:
         auth_service.logout(user_id=user_id, token=token)
+
+    # 쿠키 삭제 추가
+    response.delete_cookie(key="access_token")
     
     return WrappedResponse(
         data=True,
