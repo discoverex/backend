@@ -18,6 +18,7 @@ class SceneRef(BaseModel):
     """
     manifest 내 scene_ref 정보
     """
+    title: str
     scene_id: str
     version_id: str
 

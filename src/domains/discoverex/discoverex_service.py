@@ -36,7 +36,7 @@ class DiscoverexService:
             # 1. 레이어 이미지 목록 조회 (Signed URL)
             blob_names = self.gcs_util.list_blobs(layer_prefix)
             layers = []
-            allowed_extensions = ('.png', '.lottie')
+            allowed_extensions = ('.png', '.json')
             for blob_name in blob_names:
                 # 확장자 체크 (대소문자 무시)
                 if blob_name.lower().endswith(allowed_extensions):
@@ -59,6 +59,7 @@ class DiscoverexService:
                     background_img = raw_bundle.get("background_img", {})
                     delivery_bundle = DeliveryBundle(
                         scene_ref=SceneRef(
+                            title=scene_ref_data.get("title", ""),
                             scene_id=scene_ref_data.get("scene_id", ""),
                             version_id=scene_ref_data.get("version_id", "")
                         ),
