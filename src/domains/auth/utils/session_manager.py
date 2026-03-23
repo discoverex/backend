@@ -75,7 +75,7 @@ class SessionManager:
         토큰을 키로 하여 사용자 세션 정보를 Redis에 저장합니다.
         """
         try:
-            key = f"{self.prefix}{token}"
+            key = f"{self.token_prefix}{token}"
             self.redis.setex(
                 key,
                 expire_seconds,
@@ -91,7 +91,7 @@ class SessionManager:
         Redis에서 토큰에 해당하는 세션 정보를 가져옵니다.
         """
         try:
-            key = f"{self.prefix}{token}"
+            key = f"{self.token_prefix}{token}"
             data = self.redis.get(key)
             return json.loads(data) if data else None
         except Exception as e:
@@ -103,7 +103,7 @@ class SessionManager:
         Redis에서 해당 토큰의 세션을 삭제합니다. (로그아웃)
         """
         try:
-            key = f"{self.prefix}{token}"
+            key = f"{self.token_prefix}{token}"
             return self.redis.delete(key) > 0
         except Exception as e:
             logger.error(f"Redis 세션 삭제 실패: {e}")
@@ -113,5 +113,5 @@ class SessionManager:
         """
         해당 토큰의 세션이 Redis에 활성화되어 있는지 확인합니다.
         """
-        key = f"{self.prefix}{token}"
+        key = f"{self.token_prefix}{token}"
         return self.redis.exists(key) > 0
