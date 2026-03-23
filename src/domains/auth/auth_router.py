@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, status, Response
+
+from configs.setting import APP_ENV
 from src.common.dtos.wrapped_response import WrappedResponse
 from src.configs.database import get_db_cursor
 from src.domains.auth.auth_service import AuthService
@@ -48,13 +50,14 @@ async def login_user(
     이메일/비밀번호 로그인 (JWT 발급)
     """
     token = auth_service.authenticate_user(request.email, request.password)
+    is_local = APP_ENV == "local"
 
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite="lax" if is_local else "none",     # Cross-Origin 전송 허용
+        secure=not is_local,                        # None 사용 시 필수
         max_age=60*60*24*7, # 7일간 유지
     )
     
@@ -98,13 +101,15 @@ async def logout_user(
     description="토큰(Firebase 또는 자체 JWT)을 받아 사용자 정보를 확인합니다. DB에 없는 신규 사용자라면 자동으로 회원가입을 진행합니다.",
 )
 async def get_my_profile(
+    response: Response,
     user_info: dict = Depends(verify_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    is_local = APP_ENV == "local"
     email = user_info.get("email")
     provider = user_info.get("provider", "firebase")
     fuid = user_info.get("sub") if provider == "firebase" else None
-    
+
     # Firebase 토큰인 경우 이름을 가져오고, 로컬 JWT인 경우 이름 정보는 DB에서 조회되므로 최소값 전달
     photoURL = user_info.get("picture") or user_info.get("photoURL")
     name = user_info.get("name") or email.split("@")[0]
@@ -117,6 +122,18 @@ async def get_my_profile(
         firebase_uid=fuid,
         photoURL=photoURL
     )
+
+    # 파이어베이스 유저 등 모든 유저에게 access_token 쿠키 부여
+    # verify_user에서 추출한 토큰을 다시 쿠키로 구워주면 관리 용이
+    if user_info.get("token"):
+        response.set_cookie(
+            key="access_token",
+            value=user_info["token"],
+            httponly=True,
+            samesite="lax" if is_local else "none",
+            secure=not is_local,
+            max_age=60 * 60 * 24 * 7,
+        )
 
     return WrappedResponse(
         data=user_data,
