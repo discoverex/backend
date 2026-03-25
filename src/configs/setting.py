@@ -36,13 +36,13 @@ MODEL_BUCKET_NAME = os.getenv("MODEL_BUCKET_NAME")
 GCP_SERVICE_ACCOUNT_JSON = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
 
 # 프론트엔드
-GAME_HUB_PORT = os.getenv("GAME_HUB_PORT")
-DISCOVEREX_PORT = os.getenv("DISCOVEREX_PORT")
-MAGIC_EYE_PORT = os.getenv("MAGIC_EYE_PORT")
+GAME_HUB_PORT = os.getenv("GAME_HUB_PORT", "3000")
+DISCOVEREX_PORT = os.getenv("DISCOVEREX_PORT", "3001")
+MAGIC_EYE_PORT = os.getenv("MAGIC_EYE_PORT", "3002")
 # WEB_URL = f"http://{WEB_HOST}:{WEB_PORT}"
-GAME_HUB_URL = os.getenv("GAME_HUB_URL")
-DISCOVEREX_URL = os.getenv("DISCOVEREX_URL")
-MAGIC_EYE_URL = os.getenv("MAGIC_EYE_URL")
+GAME_HUB_URL = os.getenv("GAME_HUB_URL", f"http://localhost:{GAME_HUB_PORT}")
+DISCOVEREX_URL = os.getenv("DISCOVEREX_URL", f"http://localhost:{DISCOVEREX_PORT}")
+MAGIC_EYE_URL = os.getenv("MAGIC_EYE_URL", f"http://localhost:{MAGIC_EYE_PORT}")
 
 # 허깅페이스
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -53,3 +53,15 @@ FIREBASE_SERVICE_ACCOUNT_JSON = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7일 동안 유효
 REFRESH_TOKEN_EXPIRE_SECONDS = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # 7일 만료 (초단위)
+
+# 인증
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-for-local-jwt")
+ALGORITHM = "HS256"
+AUTH_COOKIE_ENABLED = os.getenv(
+    "AUTH_COOKIE_ENABLED",
+    "true" if APP_ENV == "local" else "false",
+).lower() == "true"
+ENFORCE_REDIS_SESSIONS = os.getenv(
+    "ENFORCE_REDIS_SESSIONS",
+    "true" if APP_ENV == "local" else "false",
+).lower() == "true"

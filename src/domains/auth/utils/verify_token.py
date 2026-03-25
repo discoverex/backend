@@ -1,17 +1,13 @@
-import os
 from typing import Optional
 
 from fastapi import HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 
+from src.configs.setting import ALGORITHM, AUTH_COOKIE_ENABLED, ENFORCE_REDIS_SESSIONS, SECRET_KEY
 from src.domains.auth.utils.verify_firebase_token import _verify_firebase_core
 from src.configs.database import get_db_cursor
 from src.utils.load_sql import load_sql
-
-# JWT 설정 (자체 발급용)
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-for-local-jwt")
-ALGORITHM = "HS256"
 
 from src.domains.auth.utils.session_manager import SessionManager
 
@@ -31,7 +27,7 @@ async def verify_user(
     token = None
     if res and res.credentials:
         token = res.credentials.strip()
-    else:
+    elif AUTH_COOKIE_ENABLED:
         # 헤더에 없으면 쿠키에서 확인 (Next.js SSR 지원)
         token = request.cookies.get("access_token")
 
@@ -43,8 +39,7 @@ async def verify_user(
         )
 
     path = request.url.path
-    # 세션 체크 및 로그아웃 시간 비교 예외 경로
-    skip_session_check = path.endswith("/auth/users/me") or path.endswith("/auth/logout")
+    is_logout_path = path.endswith("/auth/logout")
 
     # 1. 자체 발급 JWT 검증 시도
     try:
@@ -52,8 +47,12 @@ async def verify_user(
         email: str = payload.get("sub")
         uid: str = payload.get("uid")
         if email and uid:
-            # 예외 경로가 아닌 경우에만 Redis 세션 활성 여부 체크
-            if not skip_session_check and not session_manager.is_user_session_active(uid):
+            if not is_logout_path and not session_manager.is_active(token):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="로그아웃되었거나 만료된 토큰입니다."
+                )
+            if ENFORCE_REDIS_SESSIONS and not is_logout_path and not session_manager.is_user_session_active(uid):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="만료되거나 다른 기기에서 로그아웃된 세션입니다."
@@ -89,8 +88,7 @@ async def verify_user(
                 last_logout_at = user_data.get("last_logout_at")
 
         if db_uuid:
-            # [핵심] skip_session_check가 아닐 때만 로그아웃 시간 및 Redis 세션 체크 수행
-            if not skip_session_check:
+            if not is_logout_path:
                 # 로그아웃 시간 비교
                 if last_logout_at and auth_time and auth_time < last_logout_at.timestamp():
                     raise HTTPException(
@@ -98,7 +96,7 @@ async def verify_user(
                         detail="로그아웃된 세션입니다. 다시 로그인해 주세요."
                     )
                 # Redis 세션 체크
-                if not session_manager.is_user_session_active(db_uuid):
+                if ENFORCE_REDIS_SESSIONS and not session_manager.is_user_session_active(db_uuid):
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="만료되거나 다른 기기에서 로그아웃된 세션입니다."
