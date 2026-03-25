@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Request, Response
 
-from configs.setting import APP_ENV
+from src.configs.setting import APP_ENV
 from src.common.dtos.wrapped_response import WrappedResponse
 from src.configs.database import get_db_cursor
 from src.domains.auth.auth_service import AuthService
@@ -74,20 +74,38 @@ async def login_user(
 )
 async def logout_user(
     response: Response,
-    user_info: dict = Depends(verify_user),
+    request: Request,
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
     로그아웃 (모든 앱 세션 삭제)
     """
-    user_id = user_info.get("uid")
-    token = user_info.get("token")
-    
-    if user_id:
-        auth_service.logout(user_id=user_id, token=token)
+    # 1. 헤더 또는 쿠키에서 직접 토큰 추출 (verify_user를 통하지 않고 시도)
+    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if not token:
+        token = request.cookies.get("access_token")
 
-    # 쿠키 삭제 추가
-    response.delete_cookie(key="access_token")
+    # 2. 토큰이 있는 경우에만 세션 파기 로직 수행
+    if token:
+        try:
+            # 토큰에서 uid 추출 (검증은 하지 않거나 최소한으로 수행)
+            from src.domains.auth.utils.verify_token import SECRET_KEY, ALGORITHM
+            from jose import jwt
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("uid")
+            if user_id:
+                auth_service.logout(user_id=user_id, token=token)
+        except Exception:
+            # 토큰 해석 실패 시(Firebase 토큰 등)에도 일단 진행
+            pass
+
+    # 3. 무조건 쿠키 삭제
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite="lax" if APP_ENV == "local" else "none",
+        secure=APP_ENV != "local"
+    )
     
     return WrappedResponse(
         data=True,

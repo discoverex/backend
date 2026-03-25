@@ -52,12 +52,13 @@ try:
     # 빈 값 제거 및 양끝 공백 제거
     allow_origins = [o.strip().rstrip('/') for o in origins if o]
 
-    if APP_ENV == "local":
-        allow_origins = ["*"]
+    # credentials가 True일 때는 origins에 "*"를 사용할 수 없으므로, 
+    # local 환경에서도 명시적인 origins 목록을 사용합니다.
     print(f"DEBUG: Final allowed origins: {allow_origins}")
 except Exception as e:
     print(f"CORS origins loading error: {e}")
-    allow_origins = ["*"] # 실패 시 fallback
+    # 최소한의 로컬 개발 주소를 fallback으로 제공
+    allow_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 app.add_middleware(
     CORSMiddleware,
