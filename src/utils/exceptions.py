@@ -28,6 +28,14 @@ def init_exception_handlers(app: FastAPI):
     async def http_exception_handler(request: Request, exc: HTTPException):
         logger.error(f"⚠️ HTTP {exc.status_code} Error: {request.method} {request.url.path}")
         logger.error(f"Detail: {exc.detail}")
+        
+        # CORS 헤더 수동 추가
+        origin = request.headers.get("origin")
+        headers = {}
+        if origin:
+            headers["Access-Control-Allow-Origin"] = origin
+            headers["Access-Control-Allow-Credentials"] = "true"
+
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -35,6 +43,7 @@ def init_exception_handlers(app: FastAPI):
                 "message": "요청 처리 중 오류가 발생했습니다.",
                 "detail": exc.detail,
             },
+            headers=headers
         )
 
     @app.exception_handler(RequestValidationError)
